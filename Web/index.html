@@ -1,18 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manette-La Traversée</title>
-    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Manette de jeu</h1>
-    <p id="status">Connexion en cours...</p>
+    <div id="ui-container">
+        <h1 id="status-text">Connexion...</h1>
+        <div id="joystick-zone"></div>
+        <button id="dash-button">Dash</button>
+    </div>
 
-    <script>
-        const socket = io();
-        socket.on('connect', () => {
-            document.getElementById('status').innerText = "Connecté au serveur!";
-        });
-    </script>
+    <script src="/socket.io/socket.io.js"></script>
+    
+    <!-- NippleJS pour le joystick virtuel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+
+    <script src="client.js"></script>
 </body>
 </html>

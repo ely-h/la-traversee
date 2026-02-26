@@ -1,0 +1,41 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #7c6e6e;
+    color: white;
+    font-family: sans-serif;
+    overflow: hidden;
+    touch-action: none;
+}
+
+#ui-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    height: 100vh;
+}
+
+#joystick-zone {
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    position: relative;
+}
+
+#dash-button {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background-color: #779d84;
+    border: none;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 5px #555;
+}
+
+#dash-button:active {
+    background-color: #115757;
+    transform: translateY(4px);
+}
