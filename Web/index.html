@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manette-La Traversée</title>
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <h1>Manette de jeu</h1>
+    <p id="status">Connexion en cours...</p>
+
+    <script>
+        const socket = io();
+        socket.on('connect', () => {
+            document.getElementById('status').innerText = "Connecté au serveur!";
+        });
+    </script>
+</body>
+</html>
