@@ -19,12 +19,14 @@ io.on('connection', (socket) => {
     socket.on('playerMove', (data) => {
         //toFixed(2) sert à limiter l'affichage à 2 décimales pour pas que il y ait trop de chiffres dans la console
         console.log(`[Move] Joueur ${socket.id} : x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`);
+        socket.broadcast.emit('playerMove', data);
     });
 
     //Réception du dash
     socket.on('playerAction', (data) => {
         if (data.type === 'DASH') {
             console.log(`[Action] Joueur ${socket.id} a déclenché un DASH`);
+            socket.broadcast.emit('playerAction', data);
         }
     });
 });
