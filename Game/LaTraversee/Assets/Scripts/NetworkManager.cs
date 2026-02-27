@@ -6,17 +6,25 @@ using SocketIOClient.Newtonsoft.Json;
 
 public class MoveData
 {
+    public string id { get; set; }
     public float x { get; set; }
     public float y { get; set; }
+}
+
+public class DisconnectData
+{
+    public string id { get; set; }
 }
 
 public class NetworkManager : MonoBehaviour
 {
     public SocketIOUnity socket;
-    public Transform playerTransform;
+    public GameObject playerPrefab;
     public float speed = 5f;
 
-    private Vector2 currentMoveInput = Vector2.zero;
+    private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
+    private Dictionary<string, Vector2> playerInputs = new Dictionary<string, Vector2>();
+
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
 
     void Start()
@@ -39,8 +47,13 @@ public class NetworkManager : MonoBehaviour
                 MoveData data = response.GetValue<MoveData>();
 
                 EnqueueMainThreadAction(() => {
-                    // On inverse l'axe Y ici pour corriger la difference Web/Unity
-                    currentMoveInput = new Vector2(data.x, -data.y);
+                    // Si l'ID du joueur n'existe pas, instance son carre
+                    if (!players.ContainsKey(data.id))
+                    {
+                        SpawnPlayer(data.id);
+                    }
+                    // Le - car le sprite allait dans le sens inverse de l'input
+                    playerInputs[data.id] = new Vector2(data.x, -data.y);
                 });
             }
             catch (Exception ex)
@@ -50,7 +63,17 @@ public class NetworkManager : MonoBehaviour
                 });
             }
         });
-
+        //Si un joueur se deconnecte
+        socket.On("playerDisconnect", (response) => {
+            try
+            {
+                DisconnectData data = response.GetValue<DisconnectData>();
+                EnqueueMainThreadAction(() => {
+                    RemovePlayer(data.id);
+                });
+            }
+            catch (Exception ex) { }
+        });
         // Lancement de la connexion
         socket.Connect();
     }
@@ -66,10 +89,41 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
-        // Deplacement du joueur
-        if (playerTransform != null && currentMoveInput != Vector2.zero)
+        // Deplacement des joueurs
+        foreach (var kvp in players)
         {
-            playerTransform.Translate(currentMoveInput * speed * Time.deltaTime, Space.World);
+            string playerId = kvp.Key;
+            GameObject playerObj = kvp.Value;
+
+            if (playerObj != null && playerInputs.ContainsKey(playerId))
+            {
+                Vector2 input = playerInputs[playerId];
+                if (input != Vector2.zero)
+                {
+                    playerObj.transform.Translate(input * speed * Time.deltaTime, Space.World);
+                }
+            }
+        }
+    }
+
+    private void SpawnPlayer(string id)
+    {
+        if (playerPrefab != null)
+        {
+            GameObject newPlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+            newPlayer.name = "Joueur_" + id;
+            players.Add(id, newPlayer);
+            playerInputs.Add(id, Vector2.zero);
+        }
+    }
+
+    private void RemovePlayer(string id)
+    {
+        if (players.ContainsKey(id))
+        {
+            Destroy(players[id]);
+            players.Remove(id);
+            playerInputs.Remove(id);
         }
     }
 

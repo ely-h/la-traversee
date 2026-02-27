@@ -14,10 +14,12 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         console.log('Joueur déconnecté:', socket.id);
+        socket.broadcast.emit('playerDisconnect', { id: socket.id });
     });
 
     socket.on('playerMove', (data) => {
         //toFixed(2) sert à limiter l'affichage à 2 décimales pour pas que il y ait trop de chiffres dans la console
+        data.id = socket.id;
         console.log(`[Move] Joueur ${socket.id} : x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`);
         socket.broadcast.emit('playerMove', data);
     });
@@ -25,6 +27,7 @@ io.on('connection', (socket) => {
     //Réception du dash
     socket.on('playerAction', (data) => {
         if (data.type === 'DASH') {
+            data.id = socket.id;
             console.log(`[Action] Joueur ${socket.id} a déclenché un DASH`);
             socket.broadcast.emit('playerAction', data);
         }
