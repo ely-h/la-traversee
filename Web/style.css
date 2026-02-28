@@ -1,3 +1,4 @@
+/* --- VARIABLES DE COULEURS --- */
 :root {
     --marron-gris: #7c6e6e;
     --menthe: #779d84;
@@ -30,8 +31,14 @@ body {
     align-items: center;
     justify-content: space-evenly;
     height: 100dvh; 
+    width: 100%;
+    top: 0;
+    left: 0;
     box-sizing: border-box;
     padding-bottom: 30px;
+    position: fixed; 
+    overflow: hidden;
+    touch-action: none;
 }
 
 #status-text {
@@ -75,17 +82,22 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     height: 100dvh;
     width: 100%;
     position: absolute;
     z-index: 10;
     background-color: var(--marron-gris);
+    overflow-y: auto; 
+    touch-action: auto; 
+    padding: 40px 0; 
+    box-sizing: border-box;
 }
 
 .game-title {
     font-size: 2.5rem;
     margin-bottom: 20px;
+    margin-top: 0;
     text-shadow: 2px 2px 0 var(--stroke-color), -2px -2px 0 var(--stroke-color), 2px -2px 0 var(--stroke-color), -2px 2px 0 var(--stroke-color);
 }
 
@@ -99,6 +111,7 @@ body {
     align-items: flex-start;
     width: 75%;
     max-width: 350px;
+    margin-bottom: 40px;
 }
 
 .login-card h2 {
@@ -158,4 +171,22 @@ body {
     border-radius: 25px;
     font-weight: bold;
     text-shadow: 1px 1px 0 var(--stroke-color), -1px -1px 0 var(--stroke-color), 1px -1px 0 var(--stroke-color), -1px 1px 0 var(--stroke-color);
+}
+
+/* --- RESPONSIVE --- */
+@media (orientation: landscape) {
+    #ui-container {
+        flex-direction: row;
+        justify-content: space-around;
+        padding-bottom: 0;
+        padding-top: 20px;
+    }
+
+    #status-text {
+        font-size: 1.5rem;
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
