@@ -8,6 +8,9 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, '../Web')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../Web/index.html'));
+});
 
 io.on('connection', (socket) => {
     console.log('Un joueur s’est connecté ! ID:', socket.id);
@@ -15,6 +18,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log('Joueur déconnecté:', socket.id);
         socket.broadcast.emit('playerDisconnect', { id: socket.id });
+    });
+
+    socket.on('playerJoin', (data) => {
+        data.id = socket.id;
+        console.log(`[Join] ${data.pseudo} a rejoint la partie avec la couleur ${data.color}`);
+        socket.broadcast.emit('playerJoin', data);
     });
 
     socket.on('playerMove', (data) => {
@@ -34,7 +43,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = 3000;
+const PORT = 4242;
 server.listen(PORT, '0.0.0.0', () => {
     console.log(`Serveur La Traversée lancé sur le port ${PORT}`);
     console.log(`Accessible en local sur http://localhost:${PORT}`);   

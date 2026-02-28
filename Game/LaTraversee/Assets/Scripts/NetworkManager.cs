@@ -4,6 +4,13 @@ using UnityEngine;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 
+public class JoinData
+{
+    public string id { get; set; }
+    public string pseudo { get; set; }
+    public string color { get; set; }
+}
+
 public class MoveData
 {
     public string id { get; set; }
@@ -29,7 +36,9 @@ public class NetworkManager : MonoBehaviour
 
     void Start()
     {
-        var uri = new Uri("http://localhost:3000");
+        Debug.Log("Le script se lance bien !");
+
+        var uri = new Uri("http://localhost:4242");
         socket = new SocketIOUnity(uri);
         socket.JsonSerializer = new NewtonsoftJsonSerializer();
 
@@ -47,11 +56,6 @@ public class NetworkManager : MonoBehaviour
                 MoveData data = response.GetValue<MoveData>();
 
                 EnqueueMainThreadAction(() => {
-                    // Si l'ID du joueur n'existe pas, instance son carre
-                    if (!players.ContainsKey(data.id))
-                    {
-                        SpawnPlayer(data.id);
-                    }
                     // Le - car le sprite allait dans le sens inverse de l'input
                     playerInputs[data.id] = new Vector2(data.x, -data.y);
                 });
@@ -63,6 +67,21 @@ public class NetworkManager : MonoBehaviour
                 });
             }
         });
+
+        socket.On("playerJoin", (response) => {
+            try {
+                JoinData data = response.GetValue<JoinData>();
+                EnqueueMainThreadAction(() => {
+                    // Si joueur n'existe pas, instance son carre
+                    if (!players.ContainsKey(data.id)) {
+                        SpawnPlayer(data.id, data.pseudo, data.color);
+                    }
+                });
+            } catch (Exception ex) {
+                EnqueueMainThreadAction(() => { Debug.LogError("Erreur Join : " + ex.Message); });
+            }
+        });
+
         //Si un joueur se deconnecte
         socket.On("playerDisconnect", (response) => {
             try
@@ -106,12 +125,22 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    private void SpawnPlayer(string id)
+    private void SpawnPlayer(string id, string pseudo = "Anonyme", string hexColor = "#ffffff")
     {
         if (playerPrefab != null)
         {
             GameObject newPlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
-            newPlayer.name = "Joueur_" + id;
+            newPlayer.name = pseudo + "_" + id;
+            SpriteRenderer renderer = newPlayer.GetComponent<SpriteRenderer>();
+
+            if (renderer != null)
+            {
+                Color newColor;
+                if (ColorUtility.TryParseHtmlString(hexColor, out newColor))
+                {
+                    renderer.color = newColor;
+                }
+            }
             players.Add(id, newPlayer);
             playerInputs.Add(id, Vector2.zero);
         }

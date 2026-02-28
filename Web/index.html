@@ -7,7 +7,28 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div id="ui-container">
+    <div id="login-container">
+        <h1 class="game-title">La Traversée</h1>
+        
+        <div class="login-card">
+            <h2>Connexion</h2>
+            
+            <label for="pseudo-input">Pseudo</label>
+            <input type="text" id="pseudo-input" placeholder="JeMangeDesCailloux91" maxlength="16">
+            
+            <label>Couleur du pseudo :</label>
+            <div id="color-picker">
+                <div class="color-btn selected" data-color="#ff5757" style="background-color: #ff5757;"></div> 
+                <div class="color-btn" data-color="#99e17a" style="background-color: #99e17a;"></div> 
+                <div class="color-btn" data-color="#5b7778" style="background-color: #5b7778;"></div> 
+                <div class="color-btn" data-color="#543711" style="background-color: #543711;"></div> 
+            </div>
+
+            <button id="join-button">Rejoindre</button>
+        </div>
+    </div>
+
+    <div id="ui-container" style="display: none;">
         <h1 id="status-text">Connexion...</h1>
         <div id="joystick-zone"></div>
         <button id="dash-button">Dash</button>
