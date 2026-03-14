@@ -39,6 +39,8 @@ public class NetworkManager : MonoBehaviour
     public float tempsRestant = 60f; // 60 secondes
     public bool partieEnCours = true;
 
+    public TMPro.TextMeshProUGUI compteurText;
+
     void Start()
     {
         Debug.Log("Le script se lance bien !");
@@ -115,12 +117,14 @@ public class NetworkManager : MonoBehaviour
 
         if (partieEnCours)
         {
-            tempsRestant -= Time.deltaTime;//enleve le temps ecoule a chaque frame
+            tempsRestant -= Time.deltaTime;
 
             if (chronoText != null)
             {
                 chronoText.text = Mathf.CeilToInt(tempsRestant).ToString();
             }
+
+            UpdateCompteur();
 
             if (tempsRestant <= 0)
             {
@@ -212,6 +216,35 @@ public class NetworkManager : MonoBehaviour
     private void OnDestroy()
     {
         if (socket != null) socket.Disconnect();
+    }
+
+    // maj du compteur de survivants et de zombies
+    public void UpdateCompteur()
+    {
+        if (!partieEnCours) return;
+
+        int survivants = 0;
+        int zombies = 0;
+
+        foreach (var kvp in players)
+        {
+            if (kvp.Value != null)
+            {
+                if (kvp.Value.CompareTag("Enemy"))
+                {
+                    zombies++;
+                }
+                else
+                {
+                    survivants++;
+                }
+            }
+        }
+
+        if (compteurText != null)
+        {
+            compteurText.text = $"SURVIVANTS : {survivants} | ZOMBIES : {zombies}";
+        }
     }
 
     public void CheckZombiesWin()
