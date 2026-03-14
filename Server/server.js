@@ -48,6 +48,13 @@ io.on('connection', (socket) => {
         //env msg au joueur infecté
         io.to(data.id).emit('youAreInfected');
     });
+    
+    //Réception de la fin de partie
+    socket.on('gameOver', (data) => {
+        console.log(`[Game Over] ${data.message}`);
+        // io.emit envoie le message absolument à TOUT LE MONDE (tous les téléphones connectés)
+        io.emit('gameOver', data);
+    });
 });
 
 const PORT = 4242;

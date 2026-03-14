@@ -75,3 +75,20 @@ socket.on('youAreInfected', () => {
     statusText.innerText = "STATUT: INFECTÉ (CHASSEZ LES AUTRES!)";
     document.body.style.backgroundColor = "#4f6920";
 });
+
+///Reception de la fin de partie
+socket.on('gameOver', (data) => {
+    console.log("Partie terminée : " + data.message);
+    
+    //cacher les éléments de jeu
+    joystickZone.style.display = 'none';
+    dashButton.style.display = 'none';
+    
+    //affichage du message de fin
+    statusText.innerText = data.message;
+    
+    document.body.style.backgroundColor = "#7c6e6e"; 
+    
+    //on force l'arret du mouvement du joueur
+    socket.emit('playerMove', { x: 0, y: 0 });
+});

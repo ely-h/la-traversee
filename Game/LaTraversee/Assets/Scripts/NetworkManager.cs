@@ -127,6 +127,11 @@ public class NetworkManager : MonoBehaviour
                 tempsRestant = 0;
                 partieEnCours = false;
                 chronoText.text = "VICTOIRE DES SURVIVANTS !";
+
+                if (socket != null)
+                {
+                    socket.Emit("gameOver", new { message = "LES SURVIVANTS GAGNENT !" });
+                }
             }
         }
 
