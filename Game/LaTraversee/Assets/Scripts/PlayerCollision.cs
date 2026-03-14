@@ -28,7 +28,11 @@ public class PlayerCollision : MonoBehaviour
             if (netManager != null && netManager.socket != null)
             {
                 netManager.socket.Emit("playerInfected", new { id = playerId });
+
+                netManager.CheckZombiesWin();
+
             }
+
         }
     }
 }

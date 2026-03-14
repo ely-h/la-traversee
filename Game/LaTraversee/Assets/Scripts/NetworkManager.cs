@@ -213,4 +213,37 @@ public class NetworkManager : MonoBehaviour
     {
         if (socket != null) socket.Disconnect();
     }
+
+    public void CheckZombiesWin()
+    {
+        if (!partieEnCours) return;
+
+        int survivants = 0;
+
+        //compteur de survivants(joueurs pas taggés "Enemy")
+        foreach (var kvp in players)
+        {
+            if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))
+            {
+                survivants++;
+            }
+        }
+
+        //si il y a des joueurs et aucun survivant, les zombies gagnent
+        if (players.Count > 0 && survivants == 0)
+        {
+            partieEnCours = false;
+
+            if (chronoText != null)
+            {
+                chronoText.text = "VICTOIRE DES ZOMBIES !";
+            }
+
+            //envoi du message de fin de partie au serveur node.js et aux telephones
+            if (socket != null)
+            {
+                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGNÉ !" });
+            }
+        }
+    }
 }
