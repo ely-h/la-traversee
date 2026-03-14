@@ -147,7 +147,12 @@ public class NetworkManager : MonoBehaviour
             if (textComponent != null)
             {
                 textComponent.text = pseudo;
-                textComponent.color = newColor;
+            }
+
+            PlayerCollision collisionScript = newPlayer.GetComponent<PlayerCollision>();
+            if (collisionScript != null)
+            {
+                collisionScript.playerId = id;
             }
             players.Add(id, newPlayer);
             playerInputs.Add(id, Vector2.zero);

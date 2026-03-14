@@ -67,3 +67,15 @@ socket.on('disconnect', () => {
     statusText.innerText = "STATUT: Déconnecté";
     console.log("Déconnecté du serveur!");
 });
+
+//Reception de l'infection
+socket.on('youAreInfected', () => {
+    console.log("Je suis infecté !!!");
+
+    statusText.innerText = "STATUT: INFECTÉ";
+    document.body.style.backgroundColor = "#4f6920";
+    joystickZone.style.display = 'none';
+    dashButton.style.display = 'none';
+
+    socket.emit('playerMove', { x: 0, y: 0 });
+});

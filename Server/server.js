@@ -41,6 +41,13 @@ io.on('connection', (socket) => {
             socket.broadcast.emit('playerAction', data);
         }
     });
+
+    //Réception de l'infection
+    socket.on('playerInfected', (data) => {
+        console.log(`[Infection] Le joueur ${data.id} a été touché !`); 
+        //env msg au joueur infecté
+        io.to(data.id).emit('youAreInfected');
+    });
 });
 
 const PORT = 4242;
