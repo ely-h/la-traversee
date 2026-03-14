@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
+using TMPro;
 
 public class JoinData
 {
@@ -133,13 +134,20 @@ public class NetworkManager : MonoBehaviour
             newPlayer.name = pseudo + "_" + id;
             SpriteRenderer renderer = newPlayer.GetComponent<SpriteRenderer>();
 
+            Color newColor = Color.white;
+
             if (renderer != null)
             {
-                Color newColor;
                 if (ColorUtility.TryParseHtmlString(hexColor, out newColor))
                 {
                     renderer.color = newColor;
                 }
+            }
+            TextMeshPro textComponent = newPlayer.GetComponentInChildren<TextMeshPro>();
+            if (textComponent != null)
+            {
+                textComponent.text = pseudo;
+                textComponent.color = newColor;
             }
             players.Add(id, newPlayer);
             playerInputs.Add(id, Vector2.zero);

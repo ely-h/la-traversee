@@ -34,6 +34,23 @@ joinButton.addEventListener('pointerdown', () => {
     
     // Couleur de fond = couleur choisie (pour se retrouver plus facilement dans la foule)
     document.body.style.backgroundColor = selectedColor;
+    const joystick = nipplejs.create({
+        zone: joystickZone,
+        mode: 'static',
+        position: { left: '50%', top: '50%' },
+        color: 'white'
+    });
+
+    joystick.on('move', (evt, data) => {
+        socket.emit('playerMove', {
+            x: data.vector.x,
+            y: data.vector.y * -1 
+        });
+    });
+
+    joystick.on('end', () => {
+        socket.emit('playerMove', { x: 0, y: 0 });
+    });
 });
 
 socket.on('connect', () => {
@@ -44,24 +61,6 @@ socket.on('connect', () => {
 dashButton.addEventListener('pointerdown', () => {
     console.log("Dash activé");
     socket.emit('playerAction', { type: 'DASH' });
-});
-
-const joystick = nipplejs.create({
-    zone: joystickZone,
-    mode: 'static',
-    position: { left: '50%', top: '50%' },
-    color: 'white'
-});
-
-joystick.on('move', (evt, data) => {
-    socket.emit('playerMove', {
-        x: data.vector.x,
-        y: data.vector.y * -1 // Inversion car l'axe Y web est inversé par rapport à Unity
-    });
-});
-
-joystick.on('end', () => {
-    socket.emit('playerMove', { x: 0, y: 0 });
 });
 
 socket.on('disconnect', () => {
