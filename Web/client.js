@@ -70,12 +70,8 @@ socket.on('disconnect', () => {
 
 //Reception de l'infection
 socket.on('youAreInfected', () => {
-    console.log("Je suis infecté !!!");
+    console.log("Je suis infecté... Je deviens le chasseur :P!!!");
 
-    statusText.innerText = "STATUT: INFECTÉ";
+    statusText.innerText = "STATUT: INFECTÉ (CHASSEZ LES AUTRES!)";
     document.body.style.backgroundColor = "#4f6920";
-    joystickZone.style.display = 'none';
-    dashButton.style.display = 'none';
-
-    socket.emit('playerMove', { x: 0, y: 0 });
 });

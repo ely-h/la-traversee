@@ -21,6 +21,9 @@ public class PlayerCollision : MonoBehaviour
 
             GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
 
+            // Changer le tag du joueur pour qu'il soit traité comme un ennemi
+            gameObject.tag = "Enemy";
+
             // Dire au serv node.js que joueur est infecté
             if (netManager != null && netManager.socket != null)
             {
