@@ -35,6 +35,10 @@ public class NetworkManager : MonoBehaviour
 
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
 
+    public TMPro.TextMeshProUGUI chronoText; //time text UI
+    public float tempsRestant = 60f; // 60 secondes
+    public bool partieEnCours = true;
+
     void Start()
     {
         Debug.Log("Le script se lance bien !");
@@ -109,21 +113,41 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
-        // Deplacement des joueurs
-        foreach (var kvp in players)
+        if (partieEnCours)
         {
-            string playerId = kvp.Key;
-            GameObject playerObj = kvp.Value;
+            tempsRestant -= Time.deltaTime;//enleve le temps ecoule a chaque frame
 
-            if (playerObj != null && playerInputs.ContainsKey(playerId))
+            if (chronoText != null)
             {
-                Vector2 input = playerInputs[playerId];
-                if (input != Vector2.zero)
+                chronoText.text = Mathf.CeilToInt(tempsRestant).ToString();
+            }
+
+            if (tempsRestant <= 0)
+            {
+                tempsRestant = 0;
+                partieEnCours = false;
+                chronoText.text = "VICTOIRE DES SURVIVANTS !";
+            }
+        }
+
+        if (partieEnCours)
+        {
+            // Deplacement des joueurs
+            foreach (var kvp in players)
+            {
+                string playerId = kvp.Key;
+                GameObject playerObj = kvp.Value;
+
+                if (playerObj != null && playerInputs.ContainsKey(playerId))
                 {
-                    Vector3 newPos = playerObj.transform.position + (Vector3)(input * speed * Time.deltaTime);
-                    newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); //gauche/droite
-                    newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); //haut/bas
-                    playerObj.transform.position = newPos;
+                    Vector2 input = playerInputs[playerId];
+                    if (input != Vector2.zero)
+                    {
+                        Vector3 newPos = playerObj.transform.position + (Vector3)(input * speed * Time.deltaTime);
+                        newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); //gauche/droite
+                        newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); //haut/bas
+                        playerObj.transform.position = newPos;
+                    }
                 }
             }
         }
