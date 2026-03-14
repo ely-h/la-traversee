@@ -120,7 +120,10 @@ public class NetworkManager : MonoBehaviour
                 Vector2 input = playerInputs[playerId];
                 if (input != Vector2.zero)
                 {
-                    playerObj.transform.Translate(input * speed * Time.deltaTime, Space.World);
+                    Vector3 newPos = playerObj.transform.position + (Vector3)(input * speed * Time.deltaTime);
+                    newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); //gauche/droite
+                    newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); //haut/bas
+                    playerObj.transform.position = newPos;
                 }
             }
         }
