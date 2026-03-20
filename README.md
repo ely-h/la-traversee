@@ -16,10 +16,10 @@ L'expérience est conçue pour être jouée en groupe dans une même pièce : le
 
 
 * **Mécaniques clés :**
-* **Dash :** Une capacité d'accélération (vitesse x2) pour esquiver ou attaquer, avec un temps de recharge de 3 secondes.
+> **Dash :** Une capacité d'accélération (vitesse x2) pour esquiver ou attaquer, avec un temps de recharge de 3 secondes.
 
 
-* **Zones de quarantaine :** Des zones de protection temporaires qui forcent le mouvement. Elles disparaissent après 5 secondes : tout joueur restant à l'intérieur est automatiquement infecté (anti-camping).
+> **Zones de quarantaine :** Des zones de protection temporaires qui forcent le mouvement. Elles disparaissent après 5 secondes : tout joueur restant à l'intérieur est automatiquement infecté (anti-camping).
 
 
 
