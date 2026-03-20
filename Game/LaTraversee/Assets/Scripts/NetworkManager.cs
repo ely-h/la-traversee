@@ -5,6 +5,12 @@ using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using TMPro;
 
+public class ActionData
+{
+    public string id { get; set; }
+    public string type { get; set; }
+}
+
 public class JoinData
 {
     public string id { get; set; }
@@ -32,12 +38,15 @@ public class NetworkManager : MonoBehaviour
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private Dictionary<string, Vector2> playerInputs = new Dictionary<string, Vector2>();
+    private Dictionary<string, float> dashEndTimes = new Dictionary<string, float>();
 
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
 
     public TMPro.TextMeshProUGUI chronoText; //time text UI
     public float tempsRestant = 60f; // 60 secondes
     public bool partieEnCours = true;
+    public float dashSpeedMultiplier = 3f; //le dash sera 3x rapide 
+    public float dashDuration = 0.2f;
 
     public TMPro.TextMeshProUGUI compteurText;
 
@@ -100,6 +109,18 @@ public class NetworkManager : MonoBehaviour
             }
             catch (Exception ex) { }
         });
+
+        socket.On("playerAction", (response) => {
+        try {
+            ActionData data = response.GetValue<ActionData>();
+            if (data.type == "DASH") {
+                EnqueueMainThreadAction(() => {
+                    dashEndTimes[data.id] = Time.time + dashDuration;
+                    Debug.Log("Dash activ√© pour : " + data.id);
+                });
+            }
+        } catch (Exception ex) { Debug.LogError("Erreur Dash : " + ex.Message); }
+        });
         // Lancement de la connexion
         socket.Connect();
     }
@@ -146,20 +167,30 @@ public class NetworkManager : MonoBehaviour
             {
                 string playerId = kvp.Key;
                 GameObject playerObj = kvp.Value;
+                float currentSpeed = speed; // On part de la vitesse de base
 
                 if (playerObj != null && playerInputs.ContainsKey(playerId))
                 {
-                    Vector2 input = playerInputs[playerId];
-                    if (input != Vector2.zero)
-                    {
-                        Vector3 newPos = playerObj.transform.position + (Vector3)(input * speed * Time.deltaTime);
-                        newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); //gauche/droite
-                        newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); //haut/bas
-                        playerObj.transform.position = newPos;
-                    }
+                if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
+                {
+                    currentSpeed = speed * dashSpeedMultiplier; // On booste la vitesse
+                }
+
+                Vector2 input = playerInputs[playerId];
+                if (input != Vector2.zero)
+                {
+                    Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
+            
+                    newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); // gauche/droite
+                    newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); // haut/bas
+            
+                    playerObj.transform.position = newPos;
+                }
                 }
             }
         }
+
+
     }
 
     private void SpawnPlayer(string id, string pseudo = "Anonyme", string hexColor = "#ffffff")
@@ -253,7 +284,7 @@ public class NetworkManager : MonoBehaviour
 
         int survivants = 0;
 
-        //compteur de survivants(joueurs pas taggÈs "Enemy")
+        //compteur de survivants(joueurs pas taggÔøΩs "Enemy")
         foreach (var kvp in players)
         {
             if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))
@@ -275,7 +306,7 @@ public class NetworkManager : MonoBehaviour
             //envoi du message de fin de partie au serveur node.js et aux telephones
             if (socket != null)
             {
-                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGN… !" });
+                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGNÔøΩ !" });
             }
         }
     }
