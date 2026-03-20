@@ -1,32 +1,36 @@
 # TODO
-- [ ] **Choix du sujet**
+- [x] **Choix du sujet**
 
-- [ ] **Game Design Document**
+- [x] **Game Design Document**
 
-- [ ] **Organisation & Planification**
+- [x] **Organisation & Planification**
 
 ## 2. Réseau
-- [ ] **Setup GitHub**
+- [x] **Setup GitHub**
 
-- [ ] **Serveur Node.js**
+- [x] **Serveur Node.js**
 
-- [ ] **Connexion Unity/Serveur**
+- [x] **Connexion Unity/Serveur**
 
-- [ ] **Interface Manette Web**
+- [x] **Interface Manette Web**
 
 ## 3. Gameplay
-- [ ] **Mouvement et Collisions** 
+- [ ] **Mouvement et Collisions** : Mouvement OK, Collisions EN COURS
 
-- [ ] **Affichage Pseudos**
+- [x] **Affichage Pseudos**
 
 ## 4. La Traversée
 - [ ] **Coder le Dash**
 
-- [ ] **Contamination**
+- [x] **Contamination**
 
 - [ ] **Zone de Quarantaine**
 
 - [ ] **Flux de partie**
+
+- [ ] **MVP**
+      
+- [ ] **Jeu Final**
 
 ## 5. Finalisation
 - [ ] **Test réseau et Débogage**
