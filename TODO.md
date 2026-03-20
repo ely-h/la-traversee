@@ -20,7 +20,7 @@
 - [x] **Affichage Pseudos**
 
 ## 4. La Traversée
-- [ ] **Coder le Dash**
+- [x] **Coder le Dash**
 
 - [x] **Contamination**
 
