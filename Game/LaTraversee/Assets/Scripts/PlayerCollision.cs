@@ -6,6 +6,7 @@ public class PlayerCollision : MonoBehaviour
 
     private NetworkManager netManager;
     private bool isInfected = false;
+    public bool isSafe = false;
 
     void Start()
     {
@@ -14,6 +15,10 @@ public class PlayerCollision : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D other)
     {
+        if (isSafe)
+            return;
+
+        // Gestion de l'infection du joueur
         if (!isInfected && other.CompareTag("Enemy"))
         {
             isInfected = true;
@@ -28,11 +33,21 @@ public class PlayerCollision : MonoBehaviour
             if (netManager != null && netManager.socket != null)
             {
                 netManager.socket.Emit("playerInfected", new { id = playerId });
-
                 netManager.CheckZombiesWin();
 
             }
 
+        }
+        // Gestion de l'arrivée au bunker
+        if (!isInfected && other.CompareTag("Bunker"))
+        {
+            isSafe = true;
+            Debug.Log($"Joueur {playerId} a atteint le bunker !");
+
+            // Effet visuel : on rend le joueur à moitié transparent pour montrer qu'il est intouchable
+            Color currentColor = GetComponent<SpriteRenderer>().color;
+            currentColor.a = 0.5f;
+            GetComponent<SpriteRenderer>().color = currentColor;
         }
     }
 }

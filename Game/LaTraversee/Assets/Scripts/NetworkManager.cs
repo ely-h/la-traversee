@@ -171,21 +171,30 @@ public class NetworkManager : MonoBehaviour
 
                 if (playerObj != null && playerInputs.ContainsKey(playerId))
                 {
-                if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
-                {
-                    currentSpeed = speed * dashSpeedMultiplier; // On booste la vitesse
-                }
+                    if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
+                    {
+                        currentSpeed = speed * dashSpeedMultiplier; // On booste la vitesse
+                    }
 
-                Vector2 input = playerInputs[playerId];
-                if (input != Vector2.zero)
-                {
-                    Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
+                    Vector2 input = playerInputs[playerId];
+
+                    if (input != Vector2.zero)
+                    {
+                        Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
+
+                        float limiteGauche = -8.5f;
+                        PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
+
+                        if(collision != null && collision.isSafe)
+                        {
+                            limiteGauche = 7.0f;
+                        }
+
+                        newPos.x = Mathf.Clamp(newPos.x, limiteGauche, 8.5f); // gauche/droite
+                        newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); // haut/bas
             
-                    newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); // gauche/droite
-                    newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); // haut/bas
-            
-                    playerObj.transform.position = newPos;
-                }
+                        playerObj.transform.position = newPos;
+                    }
                 }
             }
         }
@@ -197,7 +206,9 @@ public class NetworkManager : MonoBehaviour
     {
         if (playerPrefab != null)
         {
-            GameObject newPlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+            float randomY = UnityEngine.Random.Range(-4f, 4f);
+            Vector3 spawnPos = new Vector3(-8f, randomY, 0f);
+            GameObject newPlayer = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
             newPlayer.name = pseudo + "_" + id;
             SpriteRenderer renderer = newPlayer.GetComponent<SpriteRenderer>();
 
