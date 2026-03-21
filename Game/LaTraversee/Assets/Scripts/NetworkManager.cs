@@ -46,11 +46,13 @@ public class NetworkManager : MonoBehaviour
     public float tempsRestant = 90f;
     public bool partieEnCours = true;
     public int mancheCourante = 1;
+    public bool enIntermission = false;
 
     public float dashSpeedMultiplier = 3f;
     public float dashDuration = 0.2f;
 
     public TMPro.TextMeshProUGUI compteurText;
+
 
     void Start()
     {
@@ -138,7 +140,7 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
-        if (partieEnCours)
+        if (partieEnCours && !enIntermission)
         {
             tempsRestant -= Time.deltaTime;
 
@@ -154,52 +156,7 @@ public class NetworkManager : MonoBehaviour
             {
                 if (mancheCourante == 1)
                 {
-                    mancheCourante = 2;
-                    tempsRestant = 90f; // On remet le chrono à 90s
-
-                    Debug.Log("DÉBUT DE LA MANCHE 2 !");
-
-                    // On recup tous les joueurs pour les remettre sur la ligne de départ
-                    foreach (var kvp in players)
-                    {
-                        string pId = kvp.Key;
-                        GameObject p = kvp.Value;
-                        if (p != null)
-                        {
-                            PlayerCollision col = p.GetComponent<PlayerCollision>();
-                            float randomY = UnityEngine.Random.Range(-4f, 4f);
-
-                            // Cas 1: player zombies
-                            if (p.CompareTag("Enemy"))
-                            {
-                                p.transform.position = new Vector3(0f, randomY, 0f);
-                            }
-
-                            // Cas 2: player survivant qui n'était pas dans le bunker
-                            else if (col != null && !col.isSafe)
-                            {
-                                p.tag = "Enemy";
-                                p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
-                                p.transform.position = new Vector3(0f, randomY, 0f);
-
-                                if (socket != null)
-                                {
-                                    socket.Emit("playerInfected", new { id = pId });
-                                }
-                            }
-
-                            // Cas 3: player survivant dans le bunker
-                            else if (col != null && col.isSafe)
-                            {
-                                col.isSafe = false;
-                                Color c = p.GetComponent<SpriteRenderer>().color;
-                                c.a = 1f;
-                                p.GetComponent<SpriteRenderer>().color = c;
-
-                                p.transform.position = new Vector3(-8f, randomY, 0f); // À gauche !
-                            }
-                        }
-                    }
+                    StartCoroutine(LancerIntermission());
                 }
                 else
                 {
@@ -215,7 +172,7 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
-        if (partieEnCours)
+        if (partieEnCours && !enIntermission)
         {
             // Deplacement des joueurs
             foreach (var kvp in players)
@@ -404,5 +361,70 @@ public class NetworkManager : MonoBehaviour
                 socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGN� !" });
             }
         }
+    }
+
+    // Coroutine d'intermission entre les manches
+    private System.Collections.IEnumerator LancerIntermission()
+    {
+        enIntermission = true;
+        mancheCourante = 2;
+
+        // TP de tous les joueurs sur la ligne de départ et transformation des survivants restants en zombies
+        foreach (var kvp in players)
+        {
+            string pId = kvp.Key;
+            GameObject p = kvp.Value;
+
+            if (p != null)
+            {
+                PlayerCollision col = p.GetComponent<PlayerCollision>();
+                float randomY = UnityEngine.Random.Range(-4f, 4f);
+
+                if (p.CompareTag("Enemy"))
+                {
+                    p.transform.position = new Vector3(0f, randomY, 0f);
+                }
+                else if (col != null && !col.isSafe)
+                {
+                    p.tag = "Enemy";
+                    p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+                    p.transform.position = new Vector3(0f, randomY, 0f);
+                    if (socket != null) socket.Emit("playerInfected", new { id = pId });
+                }
+                else if (col != null && col.isSafe)
+                {
+                    col.isSafe = false;
+                    Color c = p.GetComponent<SpriteRenderer>().color;
+                    c.a = 1f;
+                    p.GetComponent<SpriteRenderer>().color = c;
+                    p.transform.position = new Vector3(-8f, randomY, 0f);
+                }
+            }
+        }
+
+        // Compte à rebours pour la manche 2
+        if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
+        yield return new WaitForSeconds(2f);
+
+        if (chronoText != null) chronoText.text = "5...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "4...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "3...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "2...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "1...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "GO !!!";
+        yield return new WaitForSeconds(0.5f);
+
+        tempsRestant = 90f;
+        enIntermission = false;
     }
 }
