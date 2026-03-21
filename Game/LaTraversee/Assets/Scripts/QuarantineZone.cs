@@ -1,21 +1,24 @@
 using UnityEngine;
 
-public class QuarantineZone : MonoBehaviour
+public class QuarantineSpawner : MonoBehaviour
 {
-    // des qu'un perso entre dans le carre ça se declenche
-    private void OnTriggerEnter2D(Collider2D other)
+    public GameObject quarantinePrefab;
+    public float spawnInterval = 10f//toutes les 10 secondes
+    public float zoneDuration = 5f;//la zone reste 5 secondes
+
+    void Start()
     {
-        Debug.Log("ce joueur est en zone quarantaine : " + other.name);
-        if (other.CompareTag("Player")) {//tester couleur
-            other.GetComponent<SpriteRenderer>().color = Color.cyan;
-        }
+        // Lance la fonction "Spawn" de manière répétée
+        InvokeRepeating("SpawnZone", 2f, spawnInterval);
     }
-    // des qu'un perso sort
-    private void OnTriggerExit2D(Collider2D other)
+
+    void SpawnZone()
     {
-        Debug.Log("ce joueur est en zone quarantaine : " + other.name);
-        if (other.CompareTag("Player")) {//test couleur
-            other.GetComponent<SpriteRenderer>().color = Color.white;
-        }
+        //position aléatoire
+        Vector3 randomPos = new Vector3(Random.Range(-5f, 5f), Random.Range(-3f, 3f), 0);
+        GameObject newZone = Instantiate(quarantinePrefab, randomPos, Quaternion.identity);
+        Destroy(newZone, zoneDuration);
+        
+        Debug.Log("ZONE !");
     }
 }
