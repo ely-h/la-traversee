@@ -161,23 +161,41 @@ public class NetworkManager : MonoBehaviour
                     // On recup tous les joueurs pour les remettre sur la ligne de départ
                     foreach (var kvp in players)
                     {
+                        string pId = kvp.Key;
                         GameObject p = kvp.Value;
                         if (p != null)
                         {
-                            float randomY = UnityEngine.Random.Range(-4f, 4f);
-                            p.transform.position = new Vector3(-8f, randomY, 0f);
-
                             PlayerCollision col = p.GetComponent<PlayerCollision>();
-                            if (col != null)
+                            float randomY = UnityEngine.Random.Range(-4f, 4f);
+
+                            // Cas 1: player zombies
+                            if (p.CompareTag("Enemy"))
                             {
-                                col.isSafe = false;
+                                p.transform.position = new Vector3(0f, randomY, 0f);
                             }
 
-                            if (!p.CompareTag("Enemy"))
+                            // Cas 2: player survivant qui n'était pas dans le bunker
+                            else if (col != null && !col.isSafe)
                             {
+                                p.tag = "Enemy";
+                                p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+                                p.transform.position = new Vector3(0f, randomY, 0f);
+
+                                if (socket != null)
+                                {
+                                    socket.Emit("playerInfected", new { id = pId });
+                                }
+                            }
+
+                            // Cas 3: player survivant dans le bunker
+                            else if (col != null && col.isSafe)
+                            {
+                                col.isSafe = false;
                                 Color c = p.GetComponent<SpriteRenderer>().color;
                                 c.a = 1f;
                                 p.GetComponent<SpriteRenderer>().color = c;
+
+                                p.transform.position = new Vector3(-8f, randomY, 0f); // À gauche !
                             }
                         }
                     }
