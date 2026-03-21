@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class QuarantineSpawner : MonoBehaviour
+public class QuarantineZone : MonoBehaviour
 {
     public GameObject quarantinePrefab;
     public float spawnInterval = 10f;//toutes les 10 secondes
