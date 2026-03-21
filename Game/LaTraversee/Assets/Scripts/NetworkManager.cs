@@ -45,6 +45,8 @@ public class NetworkManager : MonoBehaviour
     public TMPro.TextMeshProUGUI chronoText; //time text UI
     public float tempsRestant = 60f; // 60 secondes
     public bool partieEnCours = true;
+    public int mancheCourante = 1;
+
     public float dashSpeedMultiplier = 3f; //le dash sera 3x rapide 
     public float dashDuration = 0.2f;
 
@@ -149,13 +151,47 @@ public class NetworkManager : MonoBehaviour
 
             if (tempsRestant <= 0)
             {
-                tempsRestant = 0;
-                partieEnCours = false;
-                chronoText.text = "VICTOIRE DES SURVIVANTS !";
-
-                if (socket != null)
+                if (mancheCourante == 1)
                 {
-                    socket.Emit("gameOver", new { message = "LES SURVIVANTS GAGNENT !" });
+                    mancheCourante = 2;
+                    tempsRestant = 90f; // On remet le chrono à 90s
+
+                    Debug.Log("DÉBUT DE LA MANCHE 2 !");
+
+                    // On recup tous les joueurs pour les remettre sur la ligne de départ
+                    foreach (var kvp in players)
+                    {
+                        GameObject p = kvp.Value;
+                        if (p != null)
+                        {
+                            float randomY = UnityEngine.Random.Range(-4f, 4f);
+                            p.transform.position = new Vector3(-8f, randomY, 0f);
+
+                            PlayerCollision col = p.GetComponent<PlayerCollision>();
+                            if (col != null)
+                            {
+                                col.isSafe = false;
+                            }
+
+                            if (!p.CompareTag("Enemy"))
+                            {
+                                Color c = p.GetComponent<SpriteRenderer>().color;
+                                c.a = 1f;
+                                p.GetComponent<SpriteRenderer>().color = c;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    tempsRestant = 0;
+                    partieEnCours = false;
+                    chronoText.text = "VICTOIRE DES SURVIVANTS !";
+
+                    if (socket != null)
+                    {
+                        socket.Emit("gameOver", new { message = "LES SURVIVANTS GAGNENT !" });
+                    }
                 }
             }
         }
