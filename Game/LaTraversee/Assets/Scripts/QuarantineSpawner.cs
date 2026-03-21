@@ -6,13 +6,16 @@ public class QuarantineSpawner : MonoBehaviour
 
     void Start()
     {
+        // 1. On vérifie que le script démarre bien
+        Debug.Log("Le Spawner est ACTIF sur l'objet : " + gameObject.name);
+
+        // 2. On lance le chrono (2s de délai, puis toutes les 10s)
         InvokeRepeating("SpawnZone", 2f, 10f);
     }
 
     void SpawnZone()
     {
         Debug.Log("ZONE !");
-        Vector3 randomPos = new Vector3(Random.Range(-5f, 5f), Random.Range(-3f, 3f), 0);
-        Instantiate(quarantinePrefab, randomPos, Quaternion.identity);
+        Instantiate(quarantinePrefab, Vector3.zero, Quaternion.identity);
     }
 }
