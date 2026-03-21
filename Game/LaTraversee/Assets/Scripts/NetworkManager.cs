@@ -43,11 +43,11 @@ public class NetworkManager : MonoBehaviour
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
 
     public TMPro.TextMeshProUGUI chronoText; //time text UI
-    public float tempsRestant = 60f; // 60 secondes
+    public float tempsRestant = 90f;
     public bool partieEnCours = true;
     public int mancheCourante = 1;
 
-    public float dashSpeedMultiplier = 3f; //le dash sera 3x rapide 
+    public float dashSpeedMultiplier = 3f;
     public float dashDuration = 0.2f;
 
     public TMPro.TextMeshProUGUI compteurText;
@@ -148,6 +148,7 @@ public class NetworkManager : MonoBehaviour
             }
 
             UpdateCompteur();
+            CheckAllSurvivorsSafe();
 
             if (tempsRestant <= 0)
             {
@@ -340,6 +341,35 @@ public class NetworkManager : MonoBehaviour
         if (compteurText != null)
         {
             compteurText.text = $"SURVIVANTS : {survivants} | ZOMBIES : {zombies}";
+        }
+    }
+
+    public void CheckAllSurvivorsSafe()
+    {
+        if (!partieEnCours) 
+            return;
+
+        int totalSurvivors = 0;
+        int safeSurvivors = 0;
+
+        foreach (var kvp in players)
+        {
+            if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))
+            {
+                totalSurvivors++;
+
+                PlayerCollision col = kvp.Value.GetComponent<PlayerCollision>();
+                if (col != null && col.isSafe)
+                {
+                    safeSurvivors++;
+                }
+            }
+        }
+
+        if (totalSurvivors > 0 && totalSurvivors == safeSurvivors)
+        {
+            Debug.Log("Tous les survivants sont sauvés! time stop.");
+            tempsRestant = 0;
         }
     }
 
