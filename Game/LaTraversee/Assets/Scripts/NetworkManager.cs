@@ -43,12 +43,16 @@ public class NetworkManager : MonoBehaviour
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
 
     public TMPro.TextMeshProUGUI chronoText; //time text UI
-    public float tempsRestant = 60f; // 60 secondes
+    public float tempsRestant = 90f;
     public bool partieEnCours = true;
-    public float dashSpeedMultiplier = 3f; //le dash sera 3x rapide 
+    public int mancheCourante = 1;
+    public bool enIntermission = false;
+
+    public float dashSpeedMultiplier = 3f;
     public float dashDuration = 0.2f;
 
     public TMPro.TextMeshProUGUI compteurText;
+
 
     void Start()
     {
@@ -136,7 +140,7 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
-        if (partieEnCours)
+        if (partieEnCours && !enIntermission)
         {
             tempsRestant -= Time.deltaTime;
 
@@ -146,21 +150,29 @@ public class NetworkManager : MonoBehaviour
             }
 
             UpdateCompteur();
+            CheckAllSurvivorsSafe();
 
             if (tempsRestant <= 0)
             {
-                tempsRestant = 0;
-                partieEnCours = false;
-                chronoText.text = "VICTOIRE DES SURVIVANTS !";
-
-                if (socket != null)
+                if (mancheCourante == 1)
                 {
-                    socket.Emit("gameOver", new { message = "LES SURVIVANTS GAGNENT !" });
+                    StartCoroutine(LancerIntermission());
+                }
+                else
+                {
+                    tempsRestant = 0;
+                    partieEnCours = false;
+                    chronoText.text = "VICTOIRE DES SURVIVANTS !";
+
+                    if (socket != null)
+                    {
+                        socket.Emit("gameOver", new { message = "LES SURVIVANTS GAGNENT !" });
+                    }
                 }
             }
         }
 
-        if (partieEnCours)
+        if (partieEnCours && !enIntermission)
         {
             // Deplacement des joueurs
             foreach (var kvp in players)
@@ -171,21 +183,30 @@ public class NetworkManager : MonoBehaviour
 
                 if (playerObj != null && playerInputs.ContainsKey(playerId))
                 {
-                if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
-                {
-                    currentSpeed = speed * dashSpeedMultiplier; // On booste la vitesse
-                }
+                    if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
+                    {
+                        currentSpeed = speed * dashSpeedMultiplier; // On booste la vitesse
+                    }
 
-                Vector2 input = playerInputs[playerId];
-                if (input != Vector2.zero)
-                {
-                    Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
+                    Vector2 input = playerInputs[playerId];
+
+                    if (input != Vector2.zero)
+                    {
+                        Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
+
+                        float limiteGauche = -8.5f;
+                        PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
+
+                        if(collision != null && collision.isSafe)
+                        {
+                            limiteGauche = 7.0f;
+                        }
+
+                        newPos.x = Mathf.Clamp(newPos.x, limiteGauche, 8.5f); // gauche/droite
+                        newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); // haut/bas
             
-                    newPos.x = Mathf.Clamp(newPos.x, -8.5f, 8.5f); // gauche/droite
-                    newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); // haut/bas
-            
-                    playerObj.transform.position = newPos;
-                }
+                        playerObj.transform.position = newPos;
+                    }
                 }
             }
         }
@@ -197,7 +218,9 @@ public class NetworkManager : MonoBehaviour
     {
         if (playerPrefab != null)
         {
-            GameObject newPlayer = Instantiate(playerPrefab, Vector3.zero, Quaternion.identity);
+            float randomY = UnityEngine.Random.Range(-4f, 4f);
+            Vector3 spawnPos = new Vector3(-8f, randomY, 0f);
+            GameObject newPlayer = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
             newPlayer.name = pseudo + "_" + id;
             SpriteRenderer renderer = newPlayer.GetComponent<SpriteRenderer>();
 
@@ -278,6 +301,35 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    public void CheckAllSurvivorsSafe()
+    {
+        if (!partieEnCours) 
+            return;
+
+        int totalSurvivors = 0;
+        int safeSurvivors = 0;
+
+        foreach (var kvp in players)
+        {
+            if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))
+            {
+                totalSurvivors++;
+
+                PlayerCollision col = kvp.Value.GetComponent<PlayerCollision>();
+                if (col != null && col.isSafe)
+                {
+                    safeSurvivors++;
+                }
+            }
+        }
+
+        if (totalSurvivors > 0 && totalSurvivors == safeSurvivors)
+        {
+            Debug.Log("Tous les survivants sont sauvés! time stop.");
+            tempsRestant = 0;
+        }
+    }
+
     public void CheckZombiesWin()
     {
         if (!partieEnCours) return;
@@ -309,5 +361,70 @@ public class NetworkManager : MonoBehaviour
                 socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGN� !" });
             }
         }
+    }
+
+    // Coroutine d'intermission entre les manches
+    private System.Collections.IEnumerator LancerIntermission()
+    {
+        enIntermission = true;
+        mancheCourante = 2;
+
+        // TP de tous les joueurs sur la ligne de départ et transformation des survivants restants en zombies
+        foreach (var kvp in players)
+        {
+            string pId = kvp.Key;
+            GameObject p = kvp.Value;
+
+            if (p != null)
+            {
+                PlayerCollision col = p.GetComponent<PlayerCollision>();
+                float randomY = UnityEngine.Random.Range(-4f, 4f);
+
+                if (p.CompareTag("Enemy"))
+                {
+                    p.transform.position = new Vector3(0f, randomY, 0f);
+                }
+                else if (col != null && !col.isSafe)
+                {
+                    p.tag = "Enemy";
+                    p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+                    p.transform.position = new Vector3(0f, randomY, 0f);
+                    if (socket != null) socket.Emit("playerInfected", new { id = pId });
+                }
+                else if (col != null && col.isSafe)
+                {
+                    col.isSafe = false;
+                    Color c = p.GetComponent<SpriteRenderer>().color;
+                    c.a = 1f;
+                    p.GetComponent<SpriteRenderer>().color = c;
+                    p.transform.position = new Vector3(-8f, randomY, 0f);
+                }
+            }
+        }
+
+        // Compte à rebours pour la manche 2
+        if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
+        yield return new WaitForSeconds(2f);
+
+        if (chronoText != null) chronoText.text = "5...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "4...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "3...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "2...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "1...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "GO !!!";
+        yield return new WaitForSeconds(0.5f);
+
+        tempsRestant = 90f;
+        enIntermission = false;
     }
 }

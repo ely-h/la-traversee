@@ -26,9 +26,11 @@
 
 - [ ] **Zone de Quarantaine**
 
-- [ ] **Flux de partie**
+- [x] **Flux de partie**
 
 - [ ] **MVP**
+
+- [ ] **Graphismes (environnement, UI..)**
       
 - [ ] **Jeu Final**
 
