@@ -398,6 +398,11 @@ public class NetworkManager : MonoBehaviour
                     c.a = 1f;
                     p.GetComponent<SpriteRenderer>().color = c;
                     p.transform.position = new Vector3(-8f, randomY, 0f);
+
+                    if (socket != null) 
+                    {
+                        socket.Emit("playerReset", new { id = pId });
+                    }
                 }
             }
         }

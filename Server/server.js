@@ -55,6 +55,10 @@ io.on('connection', (socket) => {
         // On envoie un message UNIQUEMENT à ce joueur précis
         io.to(data.id).emit('youAreSafe');
     });
+
+    socket.on('playerReset', (data) => {
+        io.to(data.id).emit('resetUI');
+    });
     
     //Réception de la fin de partie
     socket.on('gameOver', (data) => {

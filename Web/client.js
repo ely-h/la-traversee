@@ -99,3 +99,12 @@ socket.on('gameOver', (data) => {
     //on force l'arret du mouvement du joueur
     socket.emit('playerMove', { x: 0, y: 0 });
 });
+
+// Retour à l'état initial pour la manche suivante
+socket.on('resetUI', () => {
+    console.log("C'est reparti pour un tour !");
+    statusText.innerText = "STATUT: Survivant";
+    
+    // On lui remet sa couleur personnalisée !
+    document.body.style.backgroundColor = selectedColor; 
+});
