@@ -19,9 +19,9 @@ public class QuarantineSpawner : MonoBehaviour
         Debug.Log("ZONE !");
 
         //position aleatoire
-        float X = Random.Range(-8f, 8f);
-        float Y = Random.Range(-8f, 8f);
-        Vector3 randomPosition = new Vector3(X, Y, 0);
+        float X = Random.Range(-2f, 2f);
+        float Y = Random.Range(-2f, 2f);
+        Vector3 randomPosition = new Vector3(2f, 2f, 1f);
         GameObject tempZone =Instantiate(quarantinePrefab, randomPosition, Quaternion.identity);
         tempZone.transform.localScale = new Vector3(tailleZone, tailleZone, 1);
         Destroy(tempZone, 5f);
