@@ -48,6 +48,13 @@ io.on('connection', (socket) => {
         //env msg au joueur infecté
         io.to(data.id).emit('youAreInfected');
     });
+
+    //Réception de l'arrivée au bunker
+    socket.on('playerSafe', (data) => {
+        console.log(`[Bunker] Le joueur ${data.id} est à l'abri !`); 
+        // On envoie un message UNIQUEMENT à ce joueur précis
+        io.to(data.id).emit('youAreSafe');
+    });
     
     //Réception de la fin de partie
     socket.on('gameOver', (data) => {

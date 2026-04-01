@@ -44,10 +44,15 @@ public class PlayerCollision : MonoBehaviour
             isSafe = true;
             Debug.Log($"Joueur {playerId} a atteint le bunker !");
 
-            // Effet visuel : on rend le joueur à moitié transparent pour montrer qu'il est intouchable
             Color currentColor = GetComponent<SpriteRenderer>().color;
             currentColor.a = 0.5f;
             GetComponent<SpriteRenderer>().color = currentColor;
+
+            // Env au serv node.js que le joueur est en sécurité
+            if (netManager != null && netManager.socket != null)
+            {
+                netManager.socket.Emit("playerSafe", new { id = playerId });
+            }
         }
     }
 }

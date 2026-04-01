@@ -71,9 +71,16 @@ socket.on('disconnect', () => {
 //Reception de l'infection
 socket.on('youAreInfected', () => {
     console.log("Je suis infecté... Je deviens le chasseur :P!!!");
-
     statusText.innerText = "STATUT: INFECTÉ (CHASSEZ LES AUTRES!)";
     document.body.style.backgroundColor = "#4f6920";
+});
+
+//Reception du statut à l'abri/safe
+socket.on('youAreSafe', () => {
+    console.log("Je suis dans le bunker !");
+    statusText.innerText = "STATUT: À L'ABRI !";
+    // On utilise la belle couleur Menthe de ta charte
+    document.body.style.backgroundColor = "var(--menthe)"; 
 });
 
 ///Reception de la fin de partie
