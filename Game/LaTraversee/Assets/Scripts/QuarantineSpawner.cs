@@ -16,7 +16,7 @@ public class QuarantineSpawner : MonoBehaviour
     void SpawnZone()
     {
         Debug.Log("ZONE !");
-        Instantiate(quarantinePrefab, Vector3.zero, Quaternion.identity);
+        GameObject tempZone =Instantiate(quarantinePrefab, Vector3.zero, Quaternion.identity);
         Destroy(tempZone, 5f);
     }
 }
