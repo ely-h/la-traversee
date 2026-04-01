@@ -27,4 +27,24 @@ public class QuarantineSpawner : MonoBehaviour
 
         Destroy(tempZone, 5f);
     }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+       //joueur entre
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log("Le joueur safe");
+            player.isSafe = true;
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        // joueur sort
+        if (other.CompareTag("Player"))
+        {
+            Debug.Log("Le joueur est SORTI de la zone !");
+            player.isSafe = false;
+        }
+    }
 }
