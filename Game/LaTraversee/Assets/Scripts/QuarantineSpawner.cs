@@ -24,7 +24,7 @@ public class QuarantineSpawner : MonoBehaviour
         Vector3 randomPosition = new Vector3(X, Y, 0);
         GameObject tempZone =Instantiate(quarantinePrefab, randomPosition, Quaternion.identity);
         tempZone.transform.localScale = new Vector3(tailleZone, tailleZone, 1);
-        tempZone.transform.localScale = new Vector3(nouvelleTaille, nouvelleTaille, 1);
+
         Destroy(tempZone, 5f);
     }
 }
