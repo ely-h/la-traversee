@@ -3,7 +3,7 @@ using UnityEngine;
 public class QuarantineSpawner : MonoBehaviour
 {
     public GameObject quarantinePrefab;
-    public float tailleZone = 0.5f;
+    public float tailleZone = 1f;
 
     void Start()
     {
@@ -21,9 +21,11 @@ public class QuarantineSpawner : MonoBehaviour
         //position aleatoire
         float X = Random.Range(-2f, 2f);
         float Y = Random.Range(-2f, 2f);
-        Vector3 randomPosition = new Vector3(2f, 2f, 1f);
+        Vector3 randomPosition = new Vector3(X, Y, 0);
         GameObject tempZone =Instantiate(quarantinePrefab, randomPosition, Quaternion.identity);
         tempZone.transform.localScale = new Vector3(tailleZone, tailleZone, 1);
+        float nouvelleTaille = 2f; 
+        tempZone.transform.localScale = new Vector3(nouvelleTaille, nouvelleTaille, 1);
         Destroy(tempZone, 5f);
     }
 }
