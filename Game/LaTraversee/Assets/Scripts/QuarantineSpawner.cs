@@ -34,7 +34,7 @@ public class QuarantineSpawner : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Debug.Log("Le joueur safe");
-            player.isSafe = true;
+            //player.isSafe = true;
         }
     }
 
@@ -44,7 +44,7 @@ public class QuarantineSpawner : MonoBehaviour
         if (other.CompareTag("Player"))
         {
             Debug.Log("Le joueur est SORTI de la zone !");
-            player.isSafe = false;
+           // player.isSafe = false;
         }
     }
 }
