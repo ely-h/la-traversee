@@ -166,7 +166,7 @@ public class NetworkManager : MonoBehaviour
 
                     if (socket != null)
                     {
-                        socket.Emit("gameOver", new { message = "LES SURVIVANTS GAGNENT !" });
+                        socket.Emit("gameOver", new { message = "LES SURVIVANTS ONT GAGNÉ !" });
                     }
                 }
             }
@@ -358,7 +358,7 @@ public class NetworkManager : MonoBehaviour
             //envoi du message de fin de partie au serveur node.js et aux telephones
             if (socket != null)
             {
-                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGN� !" });
+                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGNÉ !" });
             }
         }
     }
