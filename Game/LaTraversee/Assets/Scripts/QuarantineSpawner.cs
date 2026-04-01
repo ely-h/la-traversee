@@ -3,7 +3,7 @@ using UnityEngine;
 public class QuarantineSpawner : MonoBehaviour
 {
     public GameObject quarantinePrefab;
-    public float tailleZone = 0.5f;
+    public float tailleZone = 1f;
 
     void Start()
     {
