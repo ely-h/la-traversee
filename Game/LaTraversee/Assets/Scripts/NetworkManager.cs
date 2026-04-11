@@ -39,6 +39,7 @@ public class NetworkManager : MonoBehaviour
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private Dictionary<string, Vector2> playerInputs = new Dictionary<string, Vector2>();
     private Dictionary<string, float> dashEndTimes = new Dictionary<string, float>();
+    private Dictionary<string, float> dashCooldownEndTimes = new Dictionary<string, float>();
 
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
 
@@ -50,6 +51,7 @@ public class NetworkManager : MonoBehaviour
 
     public float dashSpeedMultiplier = 3f;
     public float dashDuration = 0.2f;
+    public float dashCooldown = 5f; 
 
     public TMPro.TextMeshProUGUI compteurText;
 
@@ -114,17 +116,30 @@ public class NetworkManager : MonoBehaviour
             catch (Exception ex) { }
         });
 
-        socket.On("playerAction", (response) => {
+    socket.On("playerAction", (response) => {
         try {
             ActionData data = response.GetValue<ActionData>();
             if (data.type == "DASH") {
                 EnqueueMainThreadAction(() => {
-                    dashEndTimes[data.id] = Time.time + dashDuration;
-                    Debug.Log("Dash activé pour : " + data.id);
+                    // Vérifie si le cooldown est terminé
+                    bool canDash = !dashCooldownEndTimes.ContainsKey(data.id) 
+                               || Time.time >= dashCooldownEndTimes[data.id];
+
+                    if (canDash) {
+                        dashEndTimes[data.id] = Time.time + dashDuration;
+                        dashCooldownEndTimes[data.id] = Time.time + dashCooldown;
+                        Debug.Log("Dash activé pour : " + data.id);
+
+                        // Optionnel : notifie le téléphone du cooldown
+                        socket.Emit("dashCooldown", new { id = data.id, cooldown = dashCooldown });
+                    } else {
+                        float remaining = dashCooldownEndTimes[data.id] - Time.time;
+                        Debug.Log($"Dash refusé pour {data.id}, cooldown restant : {remaining:F1}s");
+                    }
                 });
             }
         } catch (Exception ex) { Debug.LogError("Erreur Dash : " + ex.Message); }
-        });
+    });
         // Lancement de la connexion
         socket.Connect();
     }
@@ -256,6 +271,8 @@ public class NetworkManager : MonoBehaviour
             Destroy(players[id]);
             players.Remove(id);
             playerInputs.Remove(id);
+            dashCooldownEndTimes.Remove(id); // Nettoyage
+            dashEndTimes.Remove(id);         // Nettoyage
         }
     }
 
