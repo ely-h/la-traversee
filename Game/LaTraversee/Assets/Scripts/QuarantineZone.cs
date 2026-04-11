@@ -1,29 +1,26 @@
 using UnityEngine;
-
 public class QuarantineZone : MonoBehaviour
 {
     private void OnTriggerEnter2D(Collider2D other)
     {
-        // Bloque les zombies
         if (other.CompareTag("Enemy"))
         {
-            Debug.Log("Un zombie essaie de rentrer, refusé !");
-            // Repousse le zombie hors de la zone
-            Rigidbody2D rb = other.GetComponent<Rigidbody2D>();
-            if (rb != null)
-            {
-                Vector2 direction = (other.transform.position - transform.position).normalized;
-                rb.linearVelocity = direction * 5f;
-            }
+            RepousserZombie(other);
             return;
         }
-
-        // Survivant entre dans la zone
         if (other.CompareTag("Player"))
         {
             Debug.Log("Survivant en sécurité dans la quarantaine !");
             PlayerCollision col = other.GetComponent<PlayerCollision>();
-            if (col != null) col.isSafe = true;
+            if (col != null) col.isInQuarantine = true;
+        }
+    }
+
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        if (other.CompareTag("Enemy"))
+        {
+            RepousserZombie(other);
         }
     }
 
@@ -33,7 +30,15 @@ public class QuarantineZone : MonoBehaviour
         {
             Debug.Log("Le survivant est sorti de la quarantaine !");
             PlayerCollision col = other.GetComponent<PlayerCollision>();
-            if (col != null) col.isSafe = false;
+            if (col != null) col.isInQuarantine = false;
         }
+    }
+
+    private void RepousserZombie(Collider2D other)
+    {
+        Vector2 direction = (other.transform.position - transform.position).normalized;
+        Collider2D col = GetComponent<Collider2D>();
+        Vector2 closestPoint = col.ClosestPoint(other.transform.position);
+        other.transform.position = (Vector2)transform.position + direction * (Vector2.Distance(transform.position, closestPoint) + 0.1f);
     }
 }
