@@ -59,6 +59,7 @@ socket.on('connect', () => {
 });
 
 dashButton.addEventListener('pointerdown', () => {
+    if (dashButton.disabled) return;
     console.log("Dash activé");
     socket.emit('playerAction', { type: 'DASH' });
 });
@@ -91,4 +92,21 @@ socket.on('gameOver', (data) => {
     
     //on force l'arret du mouvement du joueur
     socket.emit('playerMove', { x: 0, y: 0 });
+});
+
+socket.on('dashCooldown', (data) => {
+    let secondesRestantes = data.cooldown;
+
+    dashButton.disabled = true;
+
+    const interval = setInterval(() => {
+        dashButton.textContent = `${secondesRestantes}s...`;
+        secondesRestantes--;
+
+        if (secondesRestantes < 0) {
+            clearInterval(interval);
+            dashButton.disabled = false;
+            dashButton.textContent = "Dash";
+        }
+    }, 1000);
 });
