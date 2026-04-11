@@ -62,6 +62,22 @@ dashButton.addEventListener('pointerdown', () => {
     if (dashButton.disabled) return;
     console.log("Dash activé");
     socket.emit('playerAction', { type: 'DASH' });
+
+    // Cooldown géré directement côté téléphone
+    let secondesRestantes = 2; // Même valeur que dashCooldown dans Unity
+    dashButton.disabled = true;
+    dashButton.textContent = `${secondesRestantes}s...`;
+
+    const interval = setInterval(() => {
+        secondesRestantes--;
+        if (secondesRestantes <= 0) {
+            clearInterval(interval);
+            dashButton.disabled = false;
+            dashButton.textContent = "Dash";
+        } else {
+            dashButton.textContent = `${secondesRestantes}s...`;
+        }
+    }, 1000);
 });
 
 socket.on('disconnect', () => {
@@ -99,26 +115,6 @@ socket.on('gameOver', (data) => {
     
     //on force l'arret du mouvement du joueur
     socket.emit('playerMove', { x: 0, y: 0 });
-});
-
-// Gestion du Cooldown du Dash (Ton code)
-socket.on('dashCooldown', (data) => {
-    let secondesRestantes = data.cooldown;
-
-    dashButton.disabled = true;
-    dashButton.textContent = `${secondesRestantes}s...`; // Affichage immédiat !
-
-    const interval = setInterval(() => {
-        secondesRestantes--;
-
-        if (secondesRestantes <= 0) {
-            clearInterval(interval);
-            dashButton.disabled = false;
-            dashButton.textContent = "Dash";
-        } else {
-            dashButton.textContent = `${secondesRestantes}s...`;
-        }
-    }, 1000);
 });
 
 // Retour à l'état initial pour la manche suivante (Code du Main)

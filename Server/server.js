@@ -42,14 +42,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    //Réception du cooldown
-    socket.on('dashCooldown', (data) => {
-        const targetSocket = io.sockets.sockets.get(data.id);
-        if (targetSocket) {
-            targetSocket.emit('dashCooldown', data);
-        }
-    });
-
     //Réception de l'infection
     socket.on('playerInfected', (data) => {
         console.log(`[Infection] Le joueur ${data.id} a été touché !`); 
