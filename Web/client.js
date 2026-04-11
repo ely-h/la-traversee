@@ -64,7 +64,7 @@ dashButton.addEventListener('pointerdown', () => {
     socket.emit('playerAction', { type: 'DASH' });
 
     // Cooldown géré directement côté téléphone
-    let secondesRestantes = 2; // Même valeur que dashCooldown dans Unity
+    let secondesRestantes = 5; // Même valeur que dashCooldown dans Unity
     dashButton.disabled = true;
     dashButton.textContent = `${secondesRestantes}s...`;
 
