@@ -72,9 +72,16 @@ socket.on('disconnect', () => {
 //Reception de l'infection
 socket.on('youAreInfected', () => {
     console.log("Je suis infecté... Je deviens le chasseur :P!!!");
-
     statusText.innerText = "STATUT: INFECTÉ (CHASSEZ LES AUTRES!)";
     document.body.style.backgroundColor = "#4f6920";
+});
+
+//Reception du statut à l'abri/safe
+socket.on('youAreSafe', () => {
+    console.log("Je suis dans le bunker !");
+    statusText.innerText = "STATUT: À L'ABRI !";
+    // On utilise la belle couleur Menthe de ta charte
+    document.body.style.backgroundColor = "var(--menthe)"; 
 });
 
 ///Reception de la fin de partie
@@ -94,9 +101,9 @@ socket.on('gameOver', (data) => {
     socket.emit('playerMove', { x: 0, y: 0 });
 });
 
+// Gestion du Cooldown du Dash (Ton code)
 socket.on('dashCooldown', (data) => {
     let secondesRestantes = data.cooldown;
-
     dashButton.disabled = true;
 
     const interval = setInterval(() => {
@@ -109,4 +116,19 @@ socket.on('dashCooldown', (data) => {
             dashButton.textContent = "Dash";
         }
     }, 1000);
+});
+
+// Retour à l'état initial pour la manche suivante (Code du Main)
+socket.on('resetUI', () => {
+    console.log("C'est reparti pour un tour !");
+    statusText.innerText = "STATUT: Survivant";
+    
+    // On réaffiche les éléments s'ils étaient cachés
+    joystickZone.style.display = 'block';
+    dashButton.style.display = 'block';
+    dashButton.disabled = false;
+    dashButton.textContent = "Dash";
+
+    // On lui remet sa couleur personnalisée !
+    document.body.style.backgroundColor = selectedColor; 
 });
