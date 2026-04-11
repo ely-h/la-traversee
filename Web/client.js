@@ -104,16 +104,19 @@ socket.on('gameOver', (data) => {
 // Gestion du Cooldown du Dash (Ton code)
 socket.on('dashCooldown', (data) => {
     let secondesRestantes = data.cooldown;
+
     dashButton.disabled = true;
+    dashButton.textContent = `${secondesRestantes}s...`; // Affichage immédiat !
 
     const interval = setInterval(() => {
-        dashButton.textContent = `${secondesRestantes}s...`;
         secondesRestantes--;
 
-        if (secondesRestantes < 0) {
+        if (secondesRestantes <= 0) {
             clearInterval(interval);
             dashButton.disabled = false;
             dashButton.textContent = "Dash";
+        } else {
+            dashButton.textContent = `${secondesRestantes}s...`;
         }
     }, 1000);
 });
