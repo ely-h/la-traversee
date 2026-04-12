@@ -73,6 +73,10 @@ socket.on('youAreInfected', () => {
     console.log("Je suis infecté... Je deviens le chasseur :P!!!");
     statusText.innerText = "STATUT: INFECTÉ (CHASSEZ LES AUTRES!)";
     document.body.style.backgroundColor = "#4f6920";
+
+    if ("vibrate" in navigator) {
+        navigator.vibrate(300);
+    }
 });
 
 //Reception du statut à l'abri/safe

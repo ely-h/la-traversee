@@ -22,14 +22,18 @@ public class PlayerCollision : MonoBehaviour
         if (!isInfected && other.CompareTag("Enemy"))
         {
             isInfected = true;
-            Debug.Log($"Joueur {playerId} est infecté !");
+            Debug.Log($"Joueur {playerId} est infectï¿½ !");
 
             GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
 
-            // Changer le tag du joueur pour qu'il soit traité comme un ennemi
+            // Changer le tag du joueur pour qu'il soit traitï¿½ comme un ennemi
             gameObject.tag = "Enemy";
 
-            // Dire au serv node.js que joueur est infecté
+            //Camera shake
+            CameraShake shakeEngine = Camera.main.GetComponent<CameraShake>();
+            if (shakeEngine != null) shakeEngine.TriggerShake();
+
+            // Dire au serv node.js que joueur est infectï¿½
             if (netManager != null && netManager.socket != null)
             {
                 netManager.socket.Emit("playerInfected", new { id = playerId });
@@ -38,7 +42,7 @@ public class PlayerCollision : MonoBehaviour
             }
 
         }
-        // Gestion de l'arrivée au bunker
+        // Gestion de l'arrivï¿½e au bunker
         if (!isInfected && other.CompareTag("Bunker"))
         {
             isSafe = true;
@@ -48,7 +52,7 @@ public class PlayerCollision : MonoBehaviour
             currentColor.a = 0.5f;
             GetComponent<SpriteRenderer>().color = currentColor;
 
-            // Env au serv node.js que le joueur est en sécurité
+            // Env au serv node.js que le joueur est en sï¿½curitï¿½
             if (netManager != null && netManager.socket != null)
             {
                 netManager.socket.Emit("playerSafe", new { id = playerId });
