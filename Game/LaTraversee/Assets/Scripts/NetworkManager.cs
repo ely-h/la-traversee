@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using TMPro;
+using Process = System.Diagnostics.Process;
+using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 
 public class ActionData
 {
@@ -54,11 +57,13 @@ public class NetworkManager : MonoBehaviour
     public float dashCooldown = 5f; 
 
     public TMPro.TextMeshProUGUI compteurText;
+    private Process localServerProcess;
 
 
     void Start()
     {
         Debug.Log("Le script se lance bien !");
+        StartLocalServer();
 
         var uri = new Uri("http://localhost:4242");
         socket = new SocketIOUnity(uri);
@@ -144,6 +149,126 @@ public class NetworkManager : MonoBehaviour
     });
         // Lancement de la connexion
         socket.Connect();
+    }
+
+    private void StartLocalServer()
+    {
+        if (localServerProcess != null && !localServerProcess.HasExited)
+        {
+            Debug.Log("AutoServerStart: le serveur local est deja actif.");
+            return;
+        }
+
+        string serverDirectory = ResolveServerDirectory();
+        if (string.IsNullOrEmpty(serverDirectory))
+        {
+            Debug.LogError("AutoServerStart: dossier Server introuvable.");
+            return;
+        }
+
+        string serverScript = Path.Combine(serverDirectory, "server.js");
+        if (!File.Exists(serverScript))
+        {
+            Debug.LogError("AutoServerStart: server.js introuvable dans " + serverDirectory);
+            return;
+        }
+
+        try
+        {
+            localServerProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "node",
+                    Arguments = "\"" + serverScript + "\"",
+                    WorkingDirectory = serverDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true
+                },
+                EnableRaisingEvents = true
+            };
+
+            localServerProcess.OutputDataReceived += (sender, args) => {
+                if (!string.IsNullOrWhiteSpace(args.Data))
+                {
+                    Debug.Log("[Server] " + args.Data);
+                }
+            };
+
+            localServerProcess.ErrorDataReceived += (sender, args) => {
+                if (!string.IsNullOrWhiteSpace(args.Data))
+                {
+                    Debug.LogError("[Server] " + args.Data);
+                }
+            };
+
+            localServerProcess.Exited += (sender, args) => {
+                Debug.Log("AutoServerStart: le serveur local s'est arrete.");
+            };
+
+            localServerProcess.Start();
+            localServerProcess.BeginOutputReadLine();
+            localServerProcess.BeginErrorReadLine();
+            Debug.Log("AutoServerStart: serveur local demarre automatiquement.");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("AutoServerStart: echec du demarrage du serveur local: " + ex.Message);
+        }
+    }
+
+    private string ResolveServerDirectory()
+    {
+        string[] candidates = new string[]
+        {
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "..", "Server")),
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Server")),
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Server"))
+        };
+
+        foreach (string candidate in candidates)
+        {
+            if (Directory.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private void ShutdownLocalServer()
+    {
+        if (localServerProcess == null || localServerProcess.HasExited)
+        {
+            return;
+        }
+
+        Debug.Log("AutoServerStart: arret propre du serveur local.");
+
+        try
+        {
+            localServerProcess.StandardInput.WriteLine("shutdown");
+            localServerProcess.StandardInput.Flush();
+
+            if (!localServerProcess.WaitForExit(3000))
+            {
+                localServerProcess.Kill();
+                localServerProcess.WaitForExit(1000);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("AutoServerStart: echec de l'arret du serveur local: " + ex.Message);
+        }
+        finally
+        {
+            localServerProcess.Dispose();
+            localServerProcess = null;
+        }
     }
 
     void Update()
@@ -286,9 +411,16 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    private void OnApplicationQuit()
     {
-        if (socket != null) socket.Disconnect();
+        Debug.Log("AutoServerStart: fermeture de l'application, extinction du serveur.");
+
+        if (socket != null)
+        {
+            socket.Disconnect();
+        }
+
+        ShutdownLocalServer();
     }
 
     // maj du compteur de survivants et de zombies
