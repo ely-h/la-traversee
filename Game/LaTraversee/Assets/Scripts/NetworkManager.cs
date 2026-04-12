@@ -78,8 +78,10 @@ public class NetworkManager : MonoBehaviour
                 MoveData data = response.GetValue<MoveData>();
 
                 EnqueueMainThreadAction(() => {
+                    Vector2 input = new Vector2(data.x, -data.y);
+                    if (input.magnitude < 0.1f) input = Vector2.zero;
                     // Le - car le sprite allait dans le sens inverse de l'input
-                    playerInputs[data.id] = new Vector2(data.x, -data.y);
+                    playerInputs[data.id] = input;
                 });
             }
             catch (Exception ex)

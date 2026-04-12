@@ -51,6 +51,14 @@ joinButton.addEventListener('pointerdown', () => {
     joystick.on('end', () => {
         socket.emit('playerMove', { x: 0, y: 0 });
     });
+
+    joystickZone.addEventListener('touchend', () => {
+        socket.emit('playerMove', { x: 0, y: 0 });
+    });
+
+    joystickZone.addEventListener('touchcancel', () => {
+        socket.emit('playerMove', { x: 0, y: 0 });
+    });
 });
 
 socket.on('connect', () => {
