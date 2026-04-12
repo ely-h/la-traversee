@@ -209,16 +209,16 @@ public class NetworkManager : MonoBehaviour
                     {
                         Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
 
-                        float limiteGauche = -8.5f;
+                        float limiteGauche = -17.0f;
                         PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
 
                         if(collision != null && collision.isSafe)
                         {
-                            limiteGauche = 7.0f;
+                            limiteGauche = 15.0f;
                         }
 
-                        newPos.x = Mathf.Clamp(newPos.x, limiteGauche, 8.5f); // gauche/droite
-                        newPos.y = Mathf.Clamp(newPos.y, -4.5f, 4.5f); // haut/bas
+                        newPos.x = Mathf.Clamp(newPos.x, limiteGauche, 17.0f); // gauche/droite
+                        newPos.y = Mathf.Clamp(newPos.y, -9.5f, 5.0f); // haut/bas
             
                         playerObj.transform.position = newPos;
                     }
@@ -233,8 +233,8 @@ public class NetworkManager : MonoBehaviour
     {
         if (playerPrefab != null)
         {
-            float randomY = UnityEngine.Random.Range(-4f, 4f);
-            Vector3 spawnPos = new Vector3(-8f, randomY, 0f);
+            float randomY = UnityEngine.Random.Range(-9f, 4f);
+            Vector3 spawnPos = new Vector3(-16f, randomY, 0f);
             GameObject newPlayer = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
             newPlayer.name = pseudo + "_" + id;
             SpriteRenderer renderer = newPlayer.GetComponent<SpriteRenderer>();
@@ -395,7 +395,7 @@ public class NetworkManager : MonoBehaviour
             if (p != null)
             {
                 PlayerCollision col = p.GetComponent<PlayerCollision>();
-                float randomY = UnityEngine.Random.Range(-4f, 4f);
+                float randomY = UnityEngine.Random.Range(-9f, 4f);
 
                 if (p.CompareTag("Enemy"))
                 {

@@ -103,3 +103,5 @@ InitTestScene*.unity*
 
 # Ignore .agent directory
 .agent/
+.agents/
+./codex
