@@ -423,6 +423,12 @@ public class NetworkManager : MonoBehaviour
                 }
             }
         }
+        CheckZombiesWin();
+
+        if (!partieEnCours) {
+            enIntermission = false;
+            yield break;
+        }
 
         // Compte à rebours pour la manche 2
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
