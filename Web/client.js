@@ -59,8 +59,25 @@ socket.on('connect', () => {
 });
 
 dashButton.addEventListener('pointerdown', () => {
+    if (dashButton.disabled) return;
     console.log("Dash activé");
     socket.emit('playerAction', { type: 'DASH' });
+
+    // Cooldown géré directement côté téléphone
+    let secondesRestantes = 5; // Même valeur que dashCooldown dans Unity
+    dashButton.disabled = true;
+    dashButton.textContent = `${secondesRestantes}s...`;
+
+    const interval = setInterval(() => {
+        secondesRestantes--;
+        if (secondesRestantes <= 0) {
+            clearInterval(interval);
+            dashButton.disabled = false;
+            dashButton.textContent = "Dash";
+        } else {
+            dashButton.textContent = `${secondesRestantes}s...`;
+        }
+    }, 1000);
 });
 
 socket.on('disconnect', () => {
@@ -104,11 +121,17 @@ socket.on('gameOver', (data) => {
     socket.emit('playerMove', { x: 0, y: 0 });
 });
 
-// Retour à l'état initial pour la manche suivante
+// Retour à l'état initial pour la manche suivante (Code du Main)
 socket.on('resetUI', () => {
     console.log("C'est reparti pour un tour !");
     statusText.innerText = "STATUT: Survivant";
     
+    // On réaffiche les éléments s'ils étaient cachés
+    joystickZone.style.display = 'block';
+    dashButton.style.display = 'block';
+    dashButton.disabled = false;
+    dashButton.textContent = "Dash";
+
     // On lui remet sa couleur personnalisée !
     document.body.style.backgroundColor = selectedColor; 
 });
