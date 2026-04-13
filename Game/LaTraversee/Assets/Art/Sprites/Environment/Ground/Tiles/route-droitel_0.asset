@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: route-droitel_0
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 346537996058103626, guid: e9ebadc326771f744b0fe1b0c212d336, type: 3}
+  m_Sprite: {fileID: 346537996058103626, guid: 558ff8b6a78a21c4db83c013042597b4, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

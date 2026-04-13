@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: ciel-suite_0
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 8790730014068718866, guid: 5a90156899f980c4c919d36c718dd708, type: 3}
+  m_Sprite: {fileID: 8790730014068718866, guid: 89d573497d9d07d42b81ec0ecd1f50a1, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1

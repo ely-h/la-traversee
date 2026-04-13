@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 13312, guid: 0000000000000000e000000000000000, type: 0}
   m_Name: "route-cass\xE9_0"
   m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.Tilemaps.Tile
-  m_Sprite: {fileID: 4583043850199147432, guid: 866fba17c985ab24fb68c68392d086a6, type: 3}
+  m_Sprite: {fileID: 4583043850199147432, guid: 78c04955e7c1af94ab35a8cfa55ca0cf, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_Transform:
     e00: 1
