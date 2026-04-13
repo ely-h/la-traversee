@@ -22,7 +22,8 @@ public class PlayerCollision : MonoBehaviour
         isInfected = true;
         Debug.Log($"Joueur {playerId} est infecté !");
 
-        GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+        PlayerSpriteController sprCtrl = GetComponent<PlayerSpriteController>();
+        if (sprCtrl != null) sprCtrl.SetState(PlayerState.Infected);
         gameObject.tag = "Enemy";
 
         // Camera shake de ta branche
