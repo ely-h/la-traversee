@@ -30,6 +30,8 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private TMP_Text joinUrlText;
     [SerializeField] private Button startButton;
     [SerializeField] private LobbyQrCodeDisplay qrCodeDisplay;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip lobbyMusic;
 
     private bool listenersRegistered;
 
@@ -38,6 +40,12 @@ public class LobbyUI : MonoBehaviour
         if (startButton != null)
         {
             startButton.onClick.AddListener(LaunchParty);
+        }
+
+        if (audioSource != null && lobbyMusic != null) {
+            audioSource.clip = lobbyMusic;
+            audioSource.loop = true;
+            audioSource.Play();
         }
 
         StartCoroutine(InitializeSocketBindings());
@@ -166,6 +174,9 @@ public class LobbyUI : MonoBehaviour
         {
             lobbyPanel.SetActive(false);
         }
+
+        // Arrêt de la musique d'accueil
+        if (audioSource != null) audioSource.Stop();
         
         if (networkManager != null)
         {
