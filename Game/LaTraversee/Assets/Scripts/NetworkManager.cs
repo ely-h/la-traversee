@@ -65,6 +65,7 @@ public class NetworkManager : MonoBehaviour
     public AudioClip intermissionMusic;
     public AudioClip zombiesWinSound;
     public AudioClip survivorsWinSound;
+    public AudioClip round1Music;
     private bool countdownSoundPlayed = false;
 
 
@@ -76,6 +77,13 @@ public class NetworkManager : MonoBehaviour
         var uri = new Uri("http://localhost:4242");
         socket = new SocketIOUnity(uri);
         socket.JsonSerializer = new NewtonsoftJsonSerializer();
+        
+        // Musique de la manche 1
+        if (audioSource != null && round1Music != null){
+            audioSource.clip = round1Music;
+            audioSource.loop = true; // Pour qu'elle tourne en boucle
+            audioSource.Play();
+        }
 
         // Ecoute connexion
         socket.OnConnected += (sender, e) => {
@@ -544,6 +552,9 @@ public class NetworkManager : MonoBehaviour
     {
         enIntermission = true;
         mancheCourante = 2;
+        
+        // Arrêt de la musique de la manche 1
+        if (audioSource != null) audioSource.Stop();
 
         // TP de tous les joueurs sur la ligne de départ et transformation des survivants restants en zombies
         foreach (var kvp in players)
