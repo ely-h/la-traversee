@@ -481,6 +481,43 @@ public class NetworkManager : MonoBehaviour
         if (chronoText != null) chronoText.text = Mathf.CeilToInt(tempsRestant).ToString();
         PlayGameMusic();
         Debug.Log("NetworkManager: partie lancee depuis le lobby.");
+
+        // Sélection aléatoire des premiers zombies
+        InitializeZombies();
+    }
+
+    public void InitializeZombies()
+    {
+        if (players.Count == 0) return;
+
+        // 1 zombie pour 2-9 joueurs, 2 pour 10-19, etc.
+        int zombieCount = 1 + (players.Count / 10);
+        if (zombieCount > players.Count) zombieCount = players.Count;
+
+        List<string> playerIds = new List<string>(players.Keys);
+
+        // Mélange aléatoire type Fisher-Yates
+        for (int i = 0; i < playerIds.Count; i++)
+        {
+            string temp = playerIds[i];
+            int randomIndex = UnityEngine.Random.Range(i, playerIds.Count);
+            playerIds[i] = playerIds[randomIndex];
+            playerIds[randomIndex] = temp;
+        }
+
+        // Infection des 'zombieCount' premiers joueurs
+        for (int i = 0; i < zombieCount; i++)
+        {
+            string zId = playerIds[i];
+            GameObject zObj = players[zId];
+
+            PlayerCollision col = zObj.GetComponent<PlayerCollision>();
+            if (col != null)
+            {
+                col.Infect();
+                SetPlayerPosition(zObj, Vector2.zero); // TP au centre
+            }
+        }
     }
 
     public void StartArenaPhase()

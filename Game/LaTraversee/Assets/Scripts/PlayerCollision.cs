@@ -14,28 +14,45 @@ public class PlayerCollision : MonoBehaviour
         netManager = FindObjectOfType<NetworkManager>();
     }
 
+    public void Infect()
+    {
+        // Gestion de l'infection - bloquée si en quarantaine ou déjà infecté/safe
+        if (isSafe || isInfected || isInQuarantine) return;
+
+        isInfected = true;
+        Debug.Log($"Joueur {playerId} est infecté !");
+
+        GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+        gameObject.tag = "Enemy";
+
+        // Camera shake de ta branche
+        CameraShake shakeEngine = Camera.main.GetComponent<CameraShake>();
+        if (shakeEngine != null) shakeEngine.TriggerShake();
+
+        if (netManager != null && netManager.socket != null)
+        {
+            netManager.socket.Emit("playerInfected", new { id = playerId });
+            netManager.CheckZombiesWin();
+        }
+    }
+
+    // Gestion des collisions solides entre les joueurs
+    void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Enemy"))
+        {
+            Infect();
+        }
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         if (isSafe) return;
 
-        // Gestion de l'infection - bloquée si en quarantaine
-        if (!isInfected && !isInQuarantine && other.CompareTag("Enemy"))
+        // Sécurité au cas où un zombie Trigger touche le joueur
+        if (other.CompareTag("Enemy"))
         {
-            isInfected = true;
-            Debug.Log($"Joueur {playerId} est infecté !");
-
-            GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
-            gameObject.tag = "Enemy";
-
-            // Camera shake de ta branche
-            CameraShake shakeEngine = Camera.main.GetComponent<CameraShake>();
-            if (shakeEngine != null) shakeEngine.TriggerShake();
-
-            if (netManager != null && netManager.socket != null)
-            {
-                netManager.socket.Emit("playerInfected", new { id = playerId });
-                netManager.CheckZombiesWin();
-            }
+            Infect();
         }
 
         // Gestion du bunker - toujours active

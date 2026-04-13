@@ -917,7 +917,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 287751817}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 1568922943}
+        m_TargetAssemblyTypeName: LobbyUI, Assembly-CSharp
+        m_MethodName: LaunchParty
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &293705769
 GameObject:
   m_ObjectHideFlags: 0
@@ -1214,6 +1226,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   playerPrefab: {fileID: 7278444566284445561, guid: 572225b2f8b9d1e48b7dd02a283fe7bc, type: 3}
   speed: 5
+  canMove: 0
   chronoText: {fileID: 8428691}
   tempsRestant: 90
   partieEnCours: 1
@@ -10906,8 +10919,6 @@ MonoBehaviour:
   joinUrlText: {fileID: 1385163699}
   startButton: {fileID: 287751819}
   qrCodeDisplay: {fileID: 717933247}
-  gameSceneName: 
-  startKey: 32
 --- !u!4 &1568922944
 Transform:
   m_ObjectHideFlags: 0
