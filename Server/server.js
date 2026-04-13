@@ -6,10 +6,35 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+let isShuttingDown = false;
 
 app.use(express.static(path.join(__dirname, '../Web')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Web/index.html'));
+});
+
+function shutdownServer() {
+    if (isShuttingDown) {
+        return;
+    }
+
+    isShuttingDown = true;
+    console.log('Arret propre du serveur La Traversee...');
+
+    io.close(() => {
+        server.close(() => {
+            console.log('Serveur La Traversee arrete proprement.');
+            process.exit(0);
+        });
+    });
+}
+
+process.on('SIGINT', shutdownServer);
+process.on('SIGTERM', shutdownServer);
+process.stdin.on('data', (data) => {
+    if (data.toString().trim().toLowerCase() === 'shutdown') {
+        shutdownServer();
+    }
 });
 
 io.on('connection', (socket) => {

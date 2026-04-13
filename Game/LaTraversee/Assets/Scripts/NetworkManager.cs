@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using SocketIOClient;
 using SocketIOClient.Newtonsoft.Json;
 using TMPro;
+using Process = System.Diagnostics.Process;
+using ProcessStartInfo = System.Diagnostics.ProcessStartInfo;
 
 public class ActionData
 {
@@ -54,15 +57,33 @@ public class NetworkManager : MonoBehaviour
     public float dashCooldown = 5f; 
 
     public TMPro.TextMeshProUGUI compteurText;
+    private Process localServerProcess;
+
+    // audio
+    public AudioSource audioSource;
+    public AudioClip tickSound;
+    public AudioClip intermissionMusic;
+    public AudioClip zombiesWinSound;
+    public AudioClip survivorsWinSound;
+    public AudioClip gameMusic;
+    private bool countdownSoundPlayed = false;
 
 
     void Start()
     {
         Debug.Log("Le script se lance bien !");
+        StartLocalServer();
 
         var uri = new Uri("http://localhost:4242");
         socket = new SocketIOUnity(uri);
         socket.JsonSerializer = new NewtonsoftJsonSerializer();
+        
+        // Musique des manches
+        if (audioSource != null && gameMusic != null){
+            audioSource.clip = gameMusic;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
 
         // Ecoute connexion
         socket.OnConnected += (sender, e) => {
@@ -146,6 +167,126 @@ public class NetworkManager : MonoBehaviour
         socket.Connect();
     }
 
+    private void StartLocalServer()
+    {
+        if (localServerProcess != null && !localServerProcess.HasExited)
+        {
+            Debug.Log("AutoServerStart: le serveur local est deja actif.");
+            return;
+        }
+
+        string serverDirectory = ResolveServerDirectory();
+        if (string.IsNullOrEmpty(serverDirectory))
+        {
+            Debug.LogError("AutoServerStart: dossier Server introuvable.");
+            return;
+        }
+
+        string serverScript = Path.Combine(serverDirectory, "server.js");
+        if (!File.Exists(serverScript))
+        {
+            Debug.LogError("AutoServerStart: server.js introuvable dans " + serverDirectory);
+            return;
+        }
+
+        try
+        {
+            localServerProcess = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "node",
+                    Arguments = "\"" + serverScript + "\"",
+                    WorkingDirectory = serverDirectory,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true
+                },
+                EnableRaisingEvents = true
+            };
+
+            localServerProcess.OutputDataReceived += (sender, args) => {
+                if (!string.IsNullOrWhiteSpace(args.Data))
+                {
+                    Debug.Log("[Server] " + args.Data);
+                }
+            };
+
+            localServerProcess.ErrorDataReceived += (sender, args) => {
+                if (!string.IsNullOrWhiteSpace(args.Data))
+                {
+                    Debug.LogError("[Server] " + args.Data);
+                }
+            };
+
+            localServerProcess.Exited += (sender, args) => {
+                Debug.Log("AutoServerStart: le serveur local s'est arrete.");
+            };
+
+            localServerProcess.Start();
+            localServerProcess.BeginOutputReadLine();
+            localServerProcess.BeginErrorReadLine();
+            Debug.Log("AutoServerStart: serveur local demarre automatiquement.");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("AutoServerStart: echec du demarrage du serveur local: " + ex.Message);
+        }
+    }
+
+    private string ResolveServerDirectory()
+    {
+        string[] candidates = new string[]
+        {
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "..", "Server")),
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Server")),
+            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Server"))
+        };
+
+        foreach (string candidate in candidates)
+        {
+            if (Directory.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
+    private void ShutdownLocalServer()
+    {
+        if (localServerProcess == null || localServerProcess.HasExited)
+        {
+            return;
+        }
+
+        Debug.Log("AutoServerStart: arret propre du serveur local.");
+
+        try
+        {
+            localServerProcess.StandardInput.WriteLine("shutdown");
+            localServerProcess.StandardInput.Flush();
+
+            if (!localServerProcess.WaitForExit(3000))
+            {
+                localServerProcess.Kill();
+                localServerProcess.WaitForExit(1000);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("AutoServerStart: echec de l'arret du serveur local: " + ex.Message);
+        }
+        finally
+        {
+            localServerProcess.Dispose();
+            localServerProcess = null;
+        }
+    }
+
     void Update()
     {
         // Execution de la file d'attente reseau sur le thread principal
@@ -166,6 +307,15 @@ public class NetworkManager : MonoBehaviour
                 chronoText.text = Mathf.CeilToInt(tempsRestant).ToString();
             }
 
+            // Son de décompte pour les 5 dernières secondes
+            if (tempsRestant <= 5f && !countdownSoundPlayed)
+            {
+                countdownSoundPlayed = true;
+                if (audioSource != null && tickSound != null)
+                    audioSource.PlayOneShot(tickSound);
+            }
+
+
             UpdateCompteur();
             CheckAllSurvivorsSafe();
 
@@ -181,6 +331,13 @@ public class NetworkManager : MonoBehaviour
                     partieEnCours = false;
                     chronoText.text = "VICTOIRE DES SURVIVANTS !";
 
+                    // Arrêt de la musique de jeu
+                    if (audioSource != null) audioSource.Stop();
+
+                    if (audioSource != null && survivorsWinSound != null){
+                        audioSource.PlayOneShot(survivorsWinSound);
+                    }
+                    
                     if (socket != null)
                     {
                         socket.Emit("gameOver", new { message = "LES SURVIVANTS ONT GAGNÉ !" });
@@ -286,9 +443,16 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    private void OnApplicationQuit()
     {
-        if (socket != null) socket.Disconnect();
+        Debug.Log("AutoServerStart: fermeture de l'application, extinction du serveur.");
+
+        if (socket != null)
+        {
+            socket.Disconnect();
+        }
+
+        ShutdownLocalServer();
     }
 
     // maj du compteur de survivants et de zombies
@@ -374,6 +538,13 @@ public class NetworkManager : MonoBehaviour
                 chronoText.text = "VICTOIRE DES ZOMBIES !";
             }
 
+            // Arrêt de la musique de jeu
+            if (audioSource != null) audioSource.Stop();
+
+            if (audioSource != null && zombiesWinSound != null){
+                audioSource.PlayOneShot(zombiesWinSound);
+            }
+
             //envoi du message de fin de partie au serveur node.js et aux telephones
             if (socket != null)
             {
@@ -432,6 +603,17 @@ public class NetworkManager : MonoBehaviour
             yield break;
         }
 
+        // Reset du flag pour la manche 2
+        countdownSoundPlayed = false;
+
+        // Arrêt de la musique de jeu et lancement de l'intermission
+        if (audioSource != null && intermissionMusic != null){
+            audioSource.Stop();
+            audioSource.clip = intermissionMusic;
+            audioSource.loop = false;
+            audioSource.Play();
+        }
+
         // Compte à rebours pour la manche 2
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
         yield return new WaitForSeconds(2f);
@@ -453,6 +635,13 @@ public class NetworkManager : MonoBehaviour
 
         if (chronoText != null) chronoText.text = "GO !!!";
         yield return new WaitForSeconds(0.5f);
+
+        // Relance la musique pour la manche 2
+        if (audioSource != null && gameMusic != null){
+            audioSource.clip = gameMusic;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
 
         tempsRestant = 90f;
         enIntermission = false;
