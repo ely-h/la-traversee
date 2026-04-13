@@ -12,6 +12,7 @@ const joystickZone = document.getElementById('joystick-zone');
 const waitingStatus = document.getElementById('waiting-status');
 const waitingPlayerName = document.getElementById('waiting-player-name');
 const waitingCount = document.getElementById('waiting-count');
+const errorMsg = document.getElementById('error-message');
 
 let selectedColor = '#ff5757';
 let joinedPlayer = null;
@@ -89,6 +90,10 @@ joinButton.addEventListener('pointerdown', () => {
         pseudo = 'Anonyme';
     }
 
+    if (errorMsg) {
+        errorMsg.style.display = 'none';
+    }
+
     selectedColor = colorPickerInput.value;
 
     joinedPlayer = {
@@ -136,6 +141,15 @@ socket.on('game_countdown', (payload) => {
 socket.on('join_rejected', () => {
     showScreen('login');
     waitingStatus.innerText = 'La partie a deja commence.';
+});
+
+socket.on('invalid_username', (data) => {
+    showScreen('login');
+    if (errorMsg) {
+        errorMsg.innerText = data.message || "Pseudo non autorisé.";
+        errorMsg.style.display = 'block';
+    }
+    document.body.style.backgroundColor = 'var(--marron-gris)'; // Reset background
 });
 
 dashButton.addEventListener('pointerdown', () => {
