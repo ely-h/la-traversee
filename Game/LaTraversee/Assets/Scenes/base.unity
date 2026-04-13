@@ -1225,7 +1225,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   playerPrefab: {fileID: 7278444566284445561, guid: 572225b2f8b9d1e48b7dd02a283fe7bc, type: 3}
-  speed: 5
+  speed: 2.5
   canMove: 0
   chronoText: {fileID: 8428691}
   tempsRestant: 90
