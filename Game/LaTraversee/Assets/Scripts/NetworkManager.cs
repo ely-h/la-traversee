@@ -59,6 +59,12 @@ public class NetworkManager : MonoBehaviour
     public TMPro.TextMeshProUGUI compteurText;
     private Process localServerProcess;
 
+    // audio
+    public AudioSource audioSource;
+    public AudioClip tickSound;
+    public AudioClip intermissionMusic;
+    private bool countdownSoundPlayed = false;
+
 
     void Start()
     {
@@ -290,6 +296,15 @@ public class NetworkManager : MonoBehaviour
             {
                 chronoText.text = Mathf.CeilToInt(tempsRestant).ToString();
             }
+
+            // Son de décompte pour les 5 dernières secondes
+            if (tempsRestant <= 5f && !countdownSoundPlayed)
+            {
+                countdownSoundPlayed = true;
+                if (audioSource != null && tickSound != null)
+                    audioSource.PlayOneShot(tickSound);
+            }
+
 
             UpdateCompteur();
             CheckAllSurvivorsSafe();
@@ -564,6 +579,16 @@ public class NetworkManager : MonoBehaviour
             yield break;
         }
 
+        // Reset du flag pour la manche 2
+        countdownSoundPlayed = false;
+
+        // Lancement de la musique d'intermission
+        if (audioSource != null && intermissionMusic != null){
+            audioSource.clip = intermissionMusic;
+            audioSource.loop = false;
+            audioSource.Play();
+        }
+
         // Compte à rebours pour la manche 2
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
         yield return new WaitForSeconds(2f);
@@ -585,6 +610,9 @@ public class NetworkManager : MonoBehaviour
 
         if (chronoText != null) chronoText.text = "GO !!!";
         yield return new WaitForSeconds(0.5f);
+
+        // Arrêt de la musique
+        if (audioSource != null) audioSource.Stop();
 
         tempsRestant = 90f;
         enIntermission = false;
