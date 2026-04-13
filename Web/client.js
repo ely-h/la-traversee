@@ -1,7 +1,7 @@
 const socket = io();
 
-// éléments du DOM
 const loginContainer = document.getElementById('login-container');
+const waitingContainer = document.getElementById('waiting-container');
 const uiContainer = document.getElementById('ui-container');
 const joinButton = document.getElementById('join-button');
 const pseudoInput = document.getElementById('pseudo-input');
@@ -9,32 +9,28 @@ const colorButtons = document.querySelectorAll('.color-btn');
 const statusText = document.getElementById('status-text');
 const dashButton = document.getElementById('dash-button');
 const joystickZone = document.getElementById('joystick-zone');
+const waitingStatus = document.getElementById('waiting-status');
+const waitingPlayerName = document.getElementById('waiting-player-name');
+const waitingCount = document.getElementById('waiting-count');
 
-let selectedColor = '#ff4757'; // Couleur par défaut
+let selectedColor = '#ff5757';
+let joinedPlayer = null;
+let joystick = null;
+let isInGame = false;
+let isCountingDown = false;
 
-// Gestion choix de couleur
-colorButtons.forEach(btn => {
-    btn.addEventListener('pointerdown', (e) => {
-        colorButtons.forEach(b => b.classList.remove('selected'));
-        e.target.classList.add('selected');
-        selectedColor = e.target.getAttribute('data-color');
-    });
-});
+function showScreen(screen) {
+    loginContainer.style.display = screen === 'login' ? 'flex' : 'none';
+    waitingContainer.style.display = screen === 'waiting' ? 'flex' : 'none';
+    uiContainer.style.display = screen === 'game' ? 'flex' : 'none';
+}
 
-// Gestion du bouton "Rejoindre"
-joinButton.addEventListener('pointerdown', () => {
-    let pseudo = pseudoInput.value.trim();
-    if (pseudo === "") pseudo = "Anonyme";
-    // Envoi des infos du joueur au serveur
-    socket.emit('playerJoin', { pseudo: pseudo, color: selectedColor });
+function ensureJoystick() {
+    if (joystick) {
+        return;
+    }
 
-    // Changement d'interface
-    loginContainer.style.display = 'none';
-    uiContainer.style.display = 'flex';
-    
-    // Couleur de fond = couleur choisie (pour se retrouver plus facilement dans la foule)
-    document.body.style.backgroundColor = selectedColor;
-    const joystick = nipplejs.create({
+    joystick = nipplejs.create({
         zone: joystickZone,
         mode: 'static',
         position: { left: '50%', top: '50%' },
@@ -44,7 +40,7 @@ joinButton.addEventListener('pointerdown', () => {
     joystick.on('move', (evt, data) => {
         socket.emit('playerMove', {
             x: data.vector.x,
-            y: data.vector.y * -1 
+            y: data.vector.y * -1
         });
     });
 
@@ -59,20 +55,101 @@ joinButton.addEventListener('pointerdown', () => {
     joystickZone.addEventListener('touchcancel', () => {
         socket.emit('playerMove', { x: 0, y: 0 });
     });
+}
+
+function updateWaitingRoom(payload) {
+    if (!joinedPlayer) {
+        return;
+    }
+
+    const playerCount = payload.players.length;
+    if (!isCountingDown) {
+        waitingStatus.innerText = payload.state === 'lobby'
+            ? 'En attente du lancement par l hote...'
+            : 'La partie est en cours.';
+    }
+    waitingPlayerName.innerText = `Joueur: ${joinedPlayer.pseudo}`;
+    waitingCount.innerText = `${playerCount} joueur(s) connecte(s)`;
+}
+
+function showController() {
+    isInGame = true;
+    isCountingDown = false;
+    showScreen('game');
+    ensureJoystick();
+    statusText.innerText = 'STATUT: Survivant';
+    document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
+}
+
+colorButtons.forEach((btn) => {
+    btn.addEventListener('pointerdown', (e) => {
+        colorButtons.forEach((b) => b.classList.remove('selected'));
+        e.target.classList.add('selected');
+        selectedColor = e.target.getAttribute('data-color');
+    });
+});
+
+joinButton.addEventListener('pointerdown', () => {
+    let pseudo = pseudoInput.value.trim();
+    if (pseudo === '') {
+        pseudo = 'Anonyme';
+    }
+
+    joinedPlayer = {
+        pseudo,
+        color: selectedColor
+    };
+
+    socket.emit('playerJoin', { pseudo, color: selectedColor });
+    showScreen('waiting');
+    document.body.style.backgroundColor = selectedColor;
+    waitingStatus.innerText = 'Connexion au lobby...';
+    waitingPlayerName.innerText = `Joueur: ${pseudo}`;
+    waitingCount.innerText = '';
 });
 
 socket.on('connect', () => {
-    statusText.innerText = "STATUT: Survivant";
-    console.log("Connecté au serveur!");
+    console.log('Connecte au serveur');
+});
+
+socket.on('player_registered', (player) => {
+    joinedPlayer = player;
+    waitingPlayerName.innerText = `Joueur: ${player.pseudo}`;
+});
+
+socket.on('lobby_state', (payload) => {
+    updateWaitingRoom(payload);
+
+    if (joinedPlayer && payload.state === 'lobby' && !isInGame) {
+        showScreen('waiting');
+    }
+});
+
+socket.on('game_started', () => {
+    showController();
+});
+
+socket.on('game_countdown', (payload) => {
+    isCountingDown = true;
+    showScreen('waiting');
+    waitingStatus.innerText = payload.remaining > 0
+        ? `La partie commence dans ${payload.remaining}...`
+        : 'GO !!!';
+});
+
+socket.on('join_rejected', () => {
+    showScreen('login');
+    waitingStatus.innerText = 'La partie a deja commence.';
 });
 
 dashButton.addEventListener('pointerdown', () => {
-    if (dashButton.disabled) return;
-    console.log("Dash activé");
+    if (dashButton.disabled) {
+        return;
+    }
+
     socket.emit('playerAction', { type: 'DASH' });
 
-    // Cooldown géré directement côté téléphone
-    let secondesRestantes = 5; // Même valeur que dashCooldown dans Unity
+    let secondesRestantes = 5;
     dashButton.disabled = true;
     dashButton.textContent = `${secondesRestantes}s...`;
 
@@ -81,7 +158,7 @@ dashButton.addEventListener('pointerdown', () => {
         if (secondesRestantes <= 0) {
             clearInterval(interval);
             dashButton.disabled = false;
-            dashButton.textContent = "Dash";
+            dashButton.textContent = 'Dash';
         } else {
             dashButton.textContent = `${secondesRestantes}s...`;
         }
@@ -89,57 +166,37 @@ dashButton.addEventListener('pointerdown', () => {
 });
 
 socket.on('disconnect', () => {
-    statusText.innerText = "STATUT: Déconnecté";
-    console.log("Déconnecté du serveur!");
+    statusText.innerText = 'STATUT: Deconnecte';
+    waitingStatus.innerText = 'Connexion perdue.';
 });
 
-//Reception de l'infection
 socket.on('youAreInfected', () => {
-    console.log("Je suis infecté... Je deviens le chasseur :P!!!");
-    statusText.innerText = "STATUT: INFECTÉ (CHASSEZ LES AUTRES!)";
-    document.body.style.backgroundColor = "#4f6920";
+    statusText.innerText = 'STATUT: INFECTE (CHASSEZ LES AUTRES!)';
+    document.body.style.backgroundColor = '#4f6920';
 
-    if ("vibrate" in navigator) {
+    if ('vibrate' in navigator) {
         navigator.vibrate(300);
     }
 });
 
-//Reception du statut à l'abri/safe
 socket.on('youAreSafe', () => {
-    console.log("Je suis dans le bunker !");
-    statusText.innerText = "STATUT: À L'ABRI !";
-    // On utilise la belle couleur Menthe de ta charte
-    document.body.style.backgroundColor = "var(--menthe)"; 
+    statusText.innerText = "STATUT: A L'ABRI !";
+    document.body.style.backgroundColor = 'var(--menthe)';
 });
 
-///Reception de la fin de partie
 socket.on('gameOver', (data) => {
-    console.log("Partie terminée : " + data.message);
-    
-    //cacher les éléments de jeu
     joystickZone.style.display = 'none';
     dashButton.style.display = 'none';
-    
-    //affichage du message de fin
     statusText.innerText = data.message;
-    
-    document.body.style.backgroundColor = "#7c6e6e"; 
-    
-    //on force l'arret du mouvement du joueur
+    document.body.style.backgroundColor = '#7c6e6e';
     socket.emit('playerMove', { x: 0, y: 0 });
 });
 
-// Retour à l'état initial pour la manche suivante (Code du Main)
 socket.on('resetUI', () => {
-    console.log("C'est reparti pour un tour !");
-    statusText.innerText = "STATUT: Survivant";
-    
-    // On réaffiche les éléments s'ils étaient cachés
+    statusText.innerText = 'STATUT: Survivant';
     joystickZone.style.display = 'block';
     dashButton.style.display = 'block';
     dashButton.disabled = false;
-    dashButton.textContent = "Dash";
-
-    // On lui remet sa couleur personnalisée !
-    document.body.style.backgroundColor = selectedColor; 
+    dashButton.textContent = 'Dash';
+    document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
 });

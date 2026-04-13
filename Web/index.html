@@ -3,28 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manette-La Traversée</title>
+    <title>Manette-La Traversee</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="login-container">
-        <h1 class="game-title">La Traversée</h1>
-        
+        <h1 class="game-title">La Traversee</h1>
+
         <div class="login-card">
             <h2>Connexion</h2>
-            
+
             <label for="pseudo-input">Pseudo</label>
             <input type="text" id="pseudo-input" placeholder="JeMangeDesCailloux91" maxlength="16">
-            
+
             <label>Couleur du pseudo :</label>
             <div id="color-picker">
-                <div class="color-btn selected" data-color="#ff5757" style="background-color: #ff5757;"></div> 
-                <div class="color-btn" data-color="#99e17a" style="background-color: #99e17a;"></div> 
-                <div class="color-btn" data-color="#5b7778" style="background-color: #5b7778;"></div> 
-                <div class="color-btn" data-color="#543711" style="background-color: #543711;"></div> 
+                <div class="color-btn selected" data-color="#ff5757" style="background-color: #ff5757;"></div>
+                <div class="color-btn" data-color="#99e17a" style="background-color: #99e17a;"></div>
+                <div class="color-btn" data-color="#5b7778" style="background-color: #5b7778;"></div>
+                <div class="color-btn" data-color="#543711" style="background-color: #543711;"></div>
             </div>
 
             <button id="join-button">Rejoindre</button>
+        </div>
+    </div>
+
+    <div id="waiting-container" style="display: none;">
+        <h1 class="game-title">Salle d'attente</h1>
+        <div class="waiting-card">
+            <p id="waiting-status">Connexion au lobby...</p>
+            <p id="waiting-player-name"></p>
+            <p id="waiting-count"></p>
         </div>
     </div>
 
@@ -35,10 +44,7 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    
-    <!-- NippleJS pour le joystick virtuel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
-
     <script src="client.js"></script>
 </body>
 </html>

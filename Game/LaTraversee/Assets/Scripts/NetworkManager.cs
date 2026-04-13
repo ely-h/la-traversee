@@ -45,6 +45,8 @@ public class NetworkManager : MonoBehaviour
     private Dictionary<string, float> dashCooldownEndTimes = new Dictionary<string, float>();
 
     private readonly Queue<Action> mainThreadActions = new Queue<Action>();
+    
+    public bool canMove = false; // MODIFIED: Added canMove boolean
 
     public TMPro.TextMeshProUGUI chronoText; //time text UI
     public float tempsRestant = 90f;
@@ -58,6 +60,8 @@ public class NetworkManager : MonoBehaviour
 
     public TMPro.TextMeshProUGUI compteurText;
     private Process localServerProcess;
+    public bool startInLobby = true;
+    private Coroutine arenaStartCoroutine;
 
     // audio
     public AudioSource audioSource;
@@ -73,22 +77,28 @@ public class NetworkManager : MonoBehaviour
     {
         Debug.Log("Le script se lance bien !");
         StartLocalServer();
+        partieEnCours = !startInLobby;
+        tempsRestant = 90f;
 
         var uri = new Uri("http://localhost:4242");
         socket = new SocketIOUnity(uri);
         socket.JsonSerializer = new NewtonsoftJsonSerializer();
         
-        // Musique des manches
-        if (audioSource != null && gameMusic != null){
-            audioSource.clip = gameMusic;
-            audioSource.loop = true;
-            audioSource.Play();
+        if (startInLobby)
+        {
+            if (chronoText != null) chronoText.text = "EN ATTENTE";
+            if (compteurText != null) compteurText.text = "Lobby";
+        }
+        else
+        {
+            PlayGameMusic();
         }
 
         // Ecoute connexion
         socket.OnConnected += (sender, e) => {
             EnqueueMainThreadAction(() => {
                 Debug.Log("Unity connecte au serveur Node.js");
+                socket.Emit("registerHost");
             });
         };
 
@@ -126,6 +136,8 @@ public class NetworkManager : MonoBehaviour
                 EnqueueMainThreadAction(() => { Debug.LogError("Erreur Join : " + ex.Message); });
             }
         });
+
+        // MODIFIED: REMOVED socket.On("game_started") to prevent overlap with LobbyUI
 
         //Si un joueur se deconnecte
         socket.On("playerDisconnect", (response) => {
@@ -350,7 +362,8 @@ public class NetworkManager : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!partieEnCours || enIntermission)
+        // MODIFIED: Added !canMove
+        if (!partieEnCours || enIntermission || !canMove)
         {
             return;
         }
@@ -448,6 +461,83 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
+    public void EnqueueLobbyAction(Action action)
+    {
+        EnqueueMainThreadAction(action);
+    }
+
+    public void BeginGameFromLobby()
+    {
+        if (partieEnCours)
+        {
+            return;
+        }
+        partieEnCours = true;
+        enIntermission = false;
+        canMove = true; // MODIFIED: Set canMove = true
+        mancheCourante = 1;
+        tempsRestant = 90f;
+        countdownSoundPlayed = false;
+        if (chronoText != null) chronoText.text = Mathf.CeilToInt(tempsRestant).ToString();
+        PlayGameMusic();
+        Debug.Log("NetworkManager: partie lancee depuis le lobby.");
+    }
+
+    public void StartArenaPhase()
+    {
+        if (arenaStartCoroutine != null || partieEnCours)
+        {
+            return;
+        }
+
+        arenaStartCoroutine = StartCoroutine(ArenaStartCountdown());
+    }
+
+    private System.Collections.IEnumerator ArenaStartCountdown()
+    {
+        partieEnCours = false;
+        enIntermission = false;
+        canMove = false; // Add safe measure
+        mancheCourante = 1;
+        countdownSoundPlayed = false;
+
+        if (compteurText != null)
+        {
+            compteurText.text = "Preparez-vous";
+        }
+
+        for (int remaining = 5; remaining >= 1; remaining--)
+        {
+            if (chronoText != null)
+            {
+                chronoText.text = remaining.ToString();
+            }
+
+            yield return new WaitForSeconds(1f);
+        }
+
+        if (chronoText != null)
+        {
+            chronoText.text = "GO !!!";
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        arenaStartCoroutine = null;
+        BeginGameFromLobby();
+    }
+
+
+    private void PlayGameMusic()
+    {
+        if (audioSource != null && gameMusic != null)
+        {
+            audioSource.clip = gameMusic;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
+    }
+
     private void SetPlayerPosition(GameObject player, Vector2 position)
     {
         if (player == null)
@@ -542,7 +632,7 @@ public class NetworkManager : MonoBehaviour
 
         int survivants = 0;
 
-        //compteur de survivants(joueurs pas tagg�s "Enemy")
+        //compteur de survivants(joueurs pas taggs "Enemy")
         foreach (var kvp in players)
         {
             if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))

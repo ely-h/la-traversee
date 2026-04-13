@@ -6,12 +6,29 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+const PORT = 4242;
+
 let isShuttingDown = false;
+let hostSocketId = null;
+let gameState = 'lobby';
+const players = new Map();
 
 app.use(express.static(path.join(__dirname, '../Web')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../Web/index.html'));
 });
+
+function getPlayersPayload() {
+    return Array.from(players.values());
+}
+
+function broadcastLobbyState() {
+    io.emit('lobby_state', {
+        state: gameState,
+        players: getPlayersPayload(),
+        port: PORT
+    });
+}
 
 function shutdownServer() {
     if (isShuttingDown) {
@@ -38,63 +55,118 @@ process.stdin.on('data', (data) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('Un joueur s’est connecté ! ID:', socket.id);
-
-    socket.on('disconnect', () => {
-        console.log('Joueur déconnecté:', socket.id);
-        socket.broadcast.emit('playerDisconnect', { id: socket.id });
+    console.log('Connexion socket:', socket.id);
+    socket.emit('lobby_state', {
+        state: gameState,
+        players: getPlayersPayload(),
+        port: PORT
     });
 
-    socket.on('playerJoin', (data) => {
-        data.id = socket.id;
-        console.log(`[Join] ${data.pseudo} a rejoint la partie avec la couleur ${data.color}`);
-        socket.broadcast.emit('playerJoin', data);
+    socket.on('registerHost', () => {
+        hostSocketId = socket.id;
+        console.log(`[Host] Hote enregistre: ${socket.id}`);
+        socket.emit('host_registered', { ok: true, port: PORT });
+        socket.emit('lobby_state', {
+            state: gameState,
+            players: getPlayersPayload(),
+            port: PORT
+        });
     });
 
-    socket.on('playerMove', (data) => {
-        //toFixed(2) sert à limiter l'affichage à 2 décimales pour pas que il y ait trop de chiffres dans la console
+    socket.on('playerJoin', (data = {}) => {
+        if (gameState !== 'lobby') {
+            socket.emit('join_rejected', { reason: 'game_already_started' });
+            return;
+        }
+
+        const pseudo = (data.pseudo || 'Anonyme').trim().slice(0, 16) || 'Anonyme';
+        const color = data.color || '#ff5757';
+        const player = {
+            id: socket.id,
+            pseudo,
+            color
+        };
+
+        players.set(socket.id, player);
+        console.log(`[Join] ${pseudo} a rejoint le lobby avec la couleur ${color}`);
+
+        socket.emit('player_registered', player);
+        socket.broadcast.emit('playerJoin', player);
+
+        if (hostSocketId) {
+            io.to(hostSocketId).emit('player_joined', {
+                state: gameState,
+                players: getPlayersPayload(),
+                port: PORT
+            });
+        }
+
+        broadcastLobbyState();
+    });
+
+    socket.on('start_game', () => {
+        if (socket.id !== hostSocketId) {
+            socket.emit('start_game_denied', { reason: 'host_only' });
+            return;
+        }
+
+        if (gameState !== 'lobby') {
+            return;
+        }
+
+        gameState = 'in_game';
+        console.log(`[Lobby] Transition vers l'arene avec ${players.size} joueur(s).`);
+        io.emit('game_started', {
+            players: getPlayersPayload()
+        });
+        broadcastLobbyState();
+    });
+
+    socket.on('playerMove', (data = {}) => {
         data.id = socket.id;
-        console.log(`[Move] Joueur ${socket.id} : x=${data.x.toFixed(2)}, y=${data.y.toFixed(2)}`);
         socket.broadcast.emit('playerMove', data);
     });
 
-    //Réception du dash
-    socket.on('playerAction', (data) => {
+    socket.on('playerAction', (data = {}) => {
         if (data.type === 'DASH') {
             data.id = socket.id;
-            console.log(`[Action] Joueur ${socket.id} a déclenché un DASH`);
             socket.broadcast.emit('playerAction', data);
         }
     });
 
-    //Réception de l'infection
     socket.on('playerInfected', (data) => {
-        console.log(`[Infection] Le joueur ${data.id} a été touché !`); 
-        //env msg au joueur infecté
         io.to(data.id).emit('youAreInfected');
     });
 
-    //Réception de l'arrivée au bunker
     socket.on('playerSafe', (data) => {
-        console.log(`[Bunker] Le joueur ${data.id} est à l'abri !`); 
-        // On envoie un message UNIQUEMENT à ce joueur précis
         io.to(data.id).emit('youAreSafe');
     });
 
     socket.on('playerReset', (data) => {
         io.to(data.id).emit('resetUI');
     });
-    
-    //Réception de la fin de partie
+
     socket.on('gameOver', (data) => {
         console.log(`[Game Over] ${data.message}`);
-        // io.emit envoie le message absolument à TOUT LE MONDE (tous les téléphones connectés)
         io.emit('gameOver', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Deconnexion socket:', socket.id);
+
+        if (socket.id === hostSocketId) {
+            hostSocketId = null;
+        }
+
+        if (players.has(socket.id)) {
+            players.delete(socket.id);
+            socket.broadcast.emit('playerDisconnect', { id: socket.id });
+            broadcastLobbyState();
+        }
     });
 });
 
-const PORT = 4242;
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Serveur La Traversée lancé sur le port ${PORT}`);
-    console.log(`Accessible en local sur http://localhost:${PORT}`);   
+    console.log(`Serveur La Traversee lance sur le port ${PORT}`);
+    console.log(`Accessible en local sur http://localhost:${PORT}`);
 });
