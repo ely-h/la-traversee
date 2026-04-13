@@ -59,6 +59,8 @@ public class NetworkManager : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip tickSound;
     public AudioClip intermissionMusic;
+    public AudioClip zombiesWinSound;
+    public AudioClip survivorsWinSound;
     private bool countdownSoundPlayed = false;
 
 
@@ -196,6 +198,10 @@ public class NetworkManager : MonoBehaviour
                     partieEnCours = false;
                     chronoText.text = "VICTOIRE DES SURVIVANTS !";
 
+                    if (audioSource != null && survivorsWinSound != null){
+                        audioSource.PlayOneShot(survivorsWinSound);
+                    }
+                    
                     if (socket != null)
                     {
                         socket.Emit("gameOver", new { message = "LES SURVIVANTS ONT GAGNÉ !" });
@@ -387,6 +393,10 @@ public class NetworkManager : MonoBehaviour
             if (chronoText != null)
             {
                 chronoText.text = "VICTOIRE DES ZOMBIES !";
+            }
+
+            if (audioSource != null && zombiesWinSound != null){
+                audioSource.PlayOneShot(zombiesWinSound);
             }
 
             //envoi du message de fin de partie au serveur node.js et aux telephones
