@@ -434,6 +434,13 @@ public class NetworkManager : MonoBehaviour
             if (textComponent != null)
             {
                 textComponent.text = pseudo;
+                
+                // Nouveauté : Apply the same color to the TextMeshPro outline dynamically
+                if (ColorUtility.TryParseHtmlString(hexColor, out newColor))
+                {
+                    textComponent.outlineColor = newColor;
+                    textComponent.outlineWidth = 0.2f; // Ensure width is non-zero so we can see the Outline
+                }
             }
 
             PlayerCollision collisionScript = newPlayer.GetComponent<PlayerCollision>();

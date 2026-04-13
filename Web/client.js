@@ -5,7 +5,7 @@ const waitingContainer = document.getElementById('waiting-container');
 const uiContainer = document.getElementById('ui-container');
 const joinButton = document.getElementById('join-button');
 const pseudoInput = document.getElementById('pseudo-input');
-const colorButtons = document.querySelectorAll('.color-btn');
+const colorPickerInput = document.getElementById('color-picker-input');
 const statusText = document.getElementById('status-text');
 const dashButton = document.getElementById('dash-button');
 const joystickZone = document.getElementById('joystick-zone');
@@ -81,19 +81,15 @@ function showController() {
     document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
 }
 
-colorButtons.forEach((btn) => {
-    btn.addEventListener('pointerdown', (e) => {
-        colorButtons.forEach((b) => b.classList.remove('selected'));
-        e.target.classList.add('selected');
-        selectedColor = e.target.getAttribute('data-color');
-    });
-});
+selectedColor = colorPickerInput.value; // Store currently selected native color
 
 joinButton.addEventListener('pointerdown', () => {
     let pseudo = pseudoInput.value.trim();
     if (pseudo === '') {
         pseudo = 'Anonyme';
     }
+
+    selectedColor = colorPickerInput.value;
 
     joinedPlayer = {
         pseudo,
