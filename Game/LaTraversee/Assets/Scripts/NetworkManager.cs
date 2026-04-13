@@ -58,6 +58,7 @@ public class NetworkManager : MonoBehaviour
     // audio
     public AudioSource audioSource;
     public AudioClip tickSound;
+    public AudioClip intermissionMusic;
     private bool countdownSoundPlayed = false;
 
 
@@ -449,6 +450,13 @@ public class NetworkManager : MonoBehaviour
         // Reset du flag pour la manche 2
         countdownSoundPlayed = false;
 
+        // Lancement de la musique d'intermission
+        if (audioSource != null && intermissionMusic != null){
+            audioSource.clip = intermissionMusic;
+            audioSource.loop = false;
+            audioSource.Play();
+        }
+
         // Compte à rebours pour la manche 2
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
         yield return new WaitForSeconds(2f);
@@ -470,6 +478,9 @@ public class NetworkManager : MonoBehaviour
 
         if (chronoText != null) chronoText.text = "GO !!!";
         yield return new WaitForSeconds(0.5f);
+
+        // Arrêt de la musique
+        if (audioSource != null) audioSource.Stop();
 
         tempsRestant = 90f;
         enIntermission = false;
