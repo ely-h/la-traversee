@@ -543,6 +543,8 @@ public class NetworkManager : MonoBehaviour
             compteurText.text = "Preparez-vous";
         }
 
+        audioSource?.PlayOneShot(tickSound);
+
         for (int remaining = 5; remaining >= 1; remaining--)
         {
             if (chronoText != null)
@@ -767,6 +769,8 @@ public class NetworkManager : MonoBehaviour
         // Compte à rebours pour la manche 2
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
         yield return new WaitForSeconds(2f);
+
+        audioSource?.PlayOneShot(tickSound);
 
         if (chronoText != null) chronoText.text = "5...";
         yield return new WaitForSeconds(1f);
