@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manette-La Traversee</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="login-container">
         <h1 class="game-title">La Traversee</h1>
@@ -14,16 +16,12 @@
             <h2>Connexion</h2>
 
             <label for="pseudo-input">Pseudo</label>
-            <input type="text" id="pseudo-input" placeholder="JeMangeDesCailloux91" maxlength="16">
+            <input type="text" id="pseudo-input" placeholder="JeMangeCailloux91" maxlength="16">
 
-            <label>Couleur du pseudo :</label>
-            <div id="color-picker">
-                <div class="color-btn selected" data-color="#ff5757" style="background-color: #ff5757;"></div>
-                <div class="color-btn" data-color="#99e17a" style="background-color: #99e17a;"></div>
-                <div class="color-btn" data-color="#5b7778" style="background-color: #5b7778;"></div>
-                <div class="color-btn" data-color="#543711" style="background-color: #543711;"></div>
-            </div>
+            <label for="color-picker-input">Couleur du joueur :</label>
+            <input type="color" id="color-picker-input" value="#ff5757">
 
+            <p id="error-message" style="display: none; color: #ff5757; text-align: center; font-weight: bold; margin-bottom: 15px; font-size: 1rem; width: 100%;"></p>
             <button id="join-button">Rejoindre</button>
         </div>
     </div>
@@ -47,4 +45,5 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <script src="client.js"></script>
 </body>
+
 </html>

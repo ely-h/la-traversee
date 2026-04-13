@@ -5,13 +5,14 @@ const waitingContainer = document.getElementById('waiting-container');
 const uiContainer = document.getElementById('ui-container');
 const joinButton = document.getElementById('join-button');
 const pseudoInput = document.getElementById('pseudo-input');
-const colorButtons = document.querySelectorAll('.color-btn');
+const colorPickerInput = document.getElementById('color-picker-input');
 const statusText = document.getElementById('status-text');
 const dashButton = document.getElementById('dash-button');
 const joystickZone = document.getElementById('joystick-zone');
 const waitingStatus = document.getElementById('waiting-status');
 const waitingPlayerName = document.getElementById('waiting-player-name');
 const waitingCount = document.getElementById('waiting-count');
+const errorMsg = document.getElementById('error-message');
 
 let selectedColor = '#ff5757';
 let joinedPlayer = null;
@@ -81,19 +82,19 @@ function showController() {
     document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
 }
 
-colorButtons.forEach((btn) => {
-    btn.addEventListener('pointerdown', (e) => {
-        colorButtons.forEach((b) => b.classList.remove('selected'));
-        e.target.classList.add('selected');
-        selectedColor = e.target.getAttribute('data-color');
-    });
-});
+selectedColor = colorPickerInput.value; // Store currently selected native color
 
 joinButton.addEventListener('pointerdown', () => {
     let pseudo = pseudoInput.value.trim();
     if (pseudo === '') {
         pseudo = 'Anonyme';
     }
+
+    if (errorMsg) {
+        errorMsg.style.display = 'none';
+    }
+
+    selectedColor = colorPickerInput.value;
 
     joinedPlayer = {
         pseudo,
@@ -140,6 +141,15 @@ socket.on('game_countdown', (payload) => {
 socket.on('join_rejected', () => {
     showScreen('login');
     waitingStatus.innerText = 'La partie a deja commence.';
+});
+
+socket.on('invalid_username', (data) => {
+    showScreen('login');
+    if (errorMsg) {
+        errorMsg.innerText = data.message || "Pseudo non autorisé.";
+        errorMsg.style.display = 'block';
+    }
+    document.body.style.backgroundColor = 'var(--marron-gris)'; // Reset background
 });
 
 dashButton.addEventListener('pointerdown', () => {

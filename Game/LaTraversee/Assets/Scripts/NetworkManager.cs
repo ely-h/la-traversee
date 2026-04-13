@@ -37,7 +37,8 @@ public class NetworkManager : MonoBehaviour
 {
     public SocketIOUnity socket;
     public GameObject playerPrefab;
-    public float speed = 5f;
+    [SerializeField] private float survivorSpeed = 2.25f;
+    [SerializeField] private float infectedSpeed = 2.35f;
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private Dictionary<string, Vector2> playerInputs = new Dictionary<string, Vector2>();
@@ -383,14 +384,18 @@ public class NetworkManager : MonoBehaviour
                 continue;
             }
 
-            float currentSpeed = speed;
+            float baseSpeed = playerObj.CompareTag("Enemy") ? infectedSpeed : survivorSpeed;
+            float currentSpeed = baseSpeed;
             if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
             {
-                currentSpeed = speed * dashSpeedMultiplier;
+                currentSpeed = baseSpeed * dashSpeedMultiplier;
             }
 
             Vector2 input = playerInputs[playerId];
             Vector2 newPos = rb.position + (input * currentSpeed * Time.fixedDeltaTime);
+
+            PlayerSpriteController sprCtrl = playerObj.GetComponent<PlayerSpriteController>();
+            if (sprCtrl != null) sprCtrl.UpdateDirection(input);
 
             float limiteGauche = -17.0f;
             PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
@@ -429,6 +434,13 @@ public class NetworkManager : MonoBehaviour
             if (textComponent != null)
             {
                 textComponent.text = pseudo;
+                
+                // Nouveauté : Apply the same color to the TextMeshPro outline dynamically
+                if (ColorUtility.TryParseHtmlString(hexColor, out newColor))
+                {
+                    textComponent.outlineColor = newColor;
+                    textComponent.outlineWidth = 0.2f; // Ensure width is non-zero so we can see the Outline
+                }
             }
 
             PlayerCollision collisionScript = newPlayer.GetComponent<PlayerCollision>();
@@ -729,13 +741,16 @@ public class NetworkManager : MonoBehaviour
                 else if (col != null && !col.isSafe)
                 {
                     p.tag = "Enemy";
-                    p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+                    PlayerSpriteController sprCtrl = p.GetComponent<PlayerSpriteController>();
+                    if (sprCtrl != null) sprCtrl.SetState(PlayerState.Infected);
                     SetPlayerPosition(p, new Vector2(0f, randomY));
                     if (socket != null) socket.Emit("playerInfected", new { id = pId });
                 }
                 else if (col != null && col.isSafe)
                 {
                     col.isSafe = false;
+                    PlayerSpriteController sprCtrl = p.GetComponent<PlayerSpriteController>();
+                    if (sprCtrl != null) sprCtrl.SetState(PlayerState.Survivor);
                     Color c = p.GetComponent<SpriteRenderer>().color;
                     c.a = 1f;
                     p.GetComponent<SpriteRenderer>().color = c;
