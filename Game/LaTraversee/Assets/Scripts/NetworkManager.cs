@@ -346,46 +346,51 @@ public class NetworkManager : MonoBehaviour
             }
         }
 
-        if (partieEnCours && !enIntermission)
+    }
+
+    void FixedUpdate()
+    {
+        if (!partieEnCours || enIntermission)
         {
-            // Deplacement des joueurs
-            foreach (var kvp in players)
-            {
-                string playerId = kvp.Key;
-                GameObject playerObj = kvp.Value;
-                float currentSpeed = speed; // On part de la vitesse de base
-
-                if (playerObj != null && playerInputs.ContainsKey(playerId))
-                {
-                    if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
-                    {
-                        currentSpeed = speed * dashSpeedMultiplier; // On booste la vitesse
-                    }
-
-                    Vector2 input = playerInputs[playerId];
-
-                    if (input != Vector2.zero)
-                    {
-                        Vector3 newPos = playerObj.transform.position + (Vector3)(input * currentSpeed * Time.deltaTime);
-
-                        float limiteGauche = -17.0f;
-                        PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
-
-                        if(collision != null && collision.isSafe)
-                        {
-                            limiteGauche = 15.0f;
-                        }
-
-                        newPos.x = Mathf.Clamp(newPos.x, limiteGauche, 17.0f); // gauche/droite
-                        newPos.y = Mathf.Clamp(newPos.y, -9.5f, 5.0f); // haut/bas
-            
-                        playerObj.transform.position = newPos;
-                    }
-                }
-            }
+            return;
         }
 
+        foreach (var kvp in players)
+        {
+            string playerId = kvp.Key;
+            GameObject playerObj = kvp.Value;
+            if (playerObj == null || !playerInputs.ContainsKey(playerId))
+            {
+                continue;
+            }
 
+            Rigidbody2D rb = playerObj.GetComponent<Rigidbody2D>();
+            if (rb == null)
+            {
+                continue;
+            }
+
+            float currentSpeed = speed;
+            if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
+            {
+                currentSpeed = speed * dashSpeedMultiplier;
+            }
+
+            Vector2 input = playerInputs[playerId];
+            Vector2 newPos = rb.position + (input * currentSpeed * Time.fixedDeltaTime);
+
+            float limiteGauche = -17.0f;
+            PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
+            if (collision != null && collision.isSafe)
+            {
+                limiteGauche = 15.0f;
+            }
+
+            newPos.x = Mathf.Clamp(newPos.x, limiteGauche, 17.0f);
+            newPos.y = Mathf.Clamp(newPos.y, -9.5f, 5.0f);
+
+            rb.MovePosition(newPos);
+        }
     }
 
     private void SpawnPlayer(string id, string pseudo = "Anonyme", string hexColor = "#ffffff")
@@ -441,6 +446,24 @@ public class NetworkManager : MonoBehaviour
         {
             mainThreadActions.Enqueue(action);
         }
+    }
+
+    private void SetPlayerPosition(GameObject player, Vector2 position)
+    {
+        if (player == null)
+        {
+            return;
+        }
+
+        Rigidbody2D rb = player.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector2.zero;
+            rb.position = position;
+            return;
+        }
+
+        player.transform.position = new Vector3(position.x, position.y, player.transform.position.z);
     }
 
     private void OnApplicationQuit()
@@ -572,13 +595,13 @@ public class NetworkManager : MonoBehaviour
 
                 if (p.CompareTag("Enemy"))
                 {
-                    p.transform.position = new Vector3(0f, randomY, 0f);
+                    SetPlayerPosition(p, new Vector2(0f, randomY));
                 }
                 else if (col != null && !col.isSafe)
                 {
                     p.tag = "Enemy";
                     p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
-                    p.transform.position = new Vector3(0f, randomY, 0f);
+                    SetPlayerPosition(p, new Vector2(0f, randomY));
                     if (socket != null) socket.Emit("playerInfected", new { id = pId });
                 }
                 else if (col != null && col.isSafe)
@@ -587,7 +610,7 @@ public class NetworkManager : MonoBehaviour
                     Color c = p.GetComponent<SpriteRenderer>().color;
                     c.a = 1f;
                     p.GetComponent<SpriteRenderer>().color = c;
-                    p.transform.position = new Vector3(-8f, randomY, 0f);
+                    SetPlayerPosition(p, new Vector2(-16f, randomY));
 
                     if (socket != null) 
                     {
