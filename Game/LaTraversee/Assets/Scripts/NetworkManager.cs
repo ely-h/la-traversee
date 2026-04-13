@@ -331,6 +331,9 @@ public class NetworkManager : MonoBehaviour
                     partieEnCours = false;
                     chronoText.text = "VICTOIRE DES SURVIVANTS !";
 
+                    // Arrêt de la musique de jeu
+                    if (audioSource != null) audioSource.Stop();
+
                     if (audioSource != null && survivorsWinSound != null){
                         audioSource.PlayOneShot(survivorsWinSound);
                     }
@@ -534,6 +537,9 @@ public class NetworkManager : MonoBehaviour
             {
                 chronoText.text = "VICTOIRE DES ZOMBIES !";
             }
+
+            // Arrêt de la musique de jeu
+            if (audioSource != null) audioSource.Stop();
 
             if (audioSource != null && zombiesWinSound != null){
                 audioSource.PlayOneShot(zombiesWinSound);
