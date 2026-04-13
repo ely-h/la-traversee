@@ -298,7 +298,11 @@ MonoBehaviour:
   dashCooldown: 5
   compteurText: {fileID: 2073878482}
   audioSource: {fileID: 544840437}
-  tickSound: {fileID: 8300000, guid: d8950399731f9c54fa497eda1faa4673, type: 3}
+  tickSound: {fileID: 8300000, guid: 8bcfcd893355caf469923ad577afb747, type: 3}
+  intermissionMusic: {fileID: 8300000, guid: acdc7e100b7262946b50aca897bcbb80, type: 3}
+  zombiesWinSound: {fileID: 8300000, guid: a5f63a25e95f0964abc2b5a0d44a7a60, type: 3}
+  survivorsWinSound: {fileID: 8300000, guid: 0ce3ea0523b5b854db560fbd2a7dc37f, type: 3}
+  gameMusic: {fileID: 8300000, guid: a8378e83bf618424086361847ce17f98, type: 3}
 --- !u!4 &544840436
 Transform:
   m_ObjectHideFlags: 0

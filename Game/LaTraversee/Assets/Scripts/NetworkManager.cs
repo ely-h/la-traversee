@@ -65,7 +65,7 @@ public class NetworkManager : MonoBehaviour
     public AudioClip intermissionMusic;
     public AudioClip zombiesWinSound;
     public AudioClip survivorsWinSound;
-    public AudioClip round1Music;
+    public AudioClip gameMusic;
     private bool countdownSoundPlayed = false;
 
 
@@ -78,10 +78,10 @@ public class NetworkManager : MonoBehaviour
         socket = new SocketIOUnity(uri);
         socket.JsonSerializer = new NewtonsoftJsonSerializer();
         
-        // Musique de la manche 1
-        if (audioSource != null && round1Music != null){
-            audioSource.clip = round1Music;
-            audioSource.loop = true; // Pour qu'elle tourne en boucle
+        // Musique des manches
+        if (audioSource != null && gameMusic != null){
+            audioSource.clip = gameMusic;
+            audioSource.loop = true;
             audioSource.Play();
         }
 
@@ -552,9 +552,6 @@ public class NetworkManager : MonoBehaviour
     {
         enIntermission = true;
         mancheCourante = 2;
-        
-        // Arrêt de la musique de la manche 1
-        if (audioSource != null) audioSource.Stop();
 
         // TP de tous les joueurs sur la ligne de départ et transformation des survivants restants en zombies
         foreach (var kvp in players)
@@ -603,8 +600,9 @@ public class NetworkManager : MonoBehaviour
         // Reset du flag pour la manche 2
         countdownSoundPlayed = false;
 
-        // Lancement de la musique d'intermission
+        // Arrêt de la musique de jeu et lancement de l'intermission
         if (audioSource != null && intermissionMusic != null){
+            audioSource.Stop();
             audioSource.clip = intermissionMusic;
             audioSource.loop = false;
             audioSource.Play();
@@ -632,8 +630,12 @@ public class NetworkManager : MonoBehaviour
         if (chronoText != null) chronoText.text = "GO !!!";
         yield return new WaitForSeconds(0.5f);
 
-        // Arrêt de la musique
-        if (audioSource != null) audioSource.Stop();
+        // Relance la musique pour la manche 2
+        if (audioSource != null && gameMusic != null){
+            audioSource.clip = gameMusic;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
 
         tempsRestant = 90f;
         enIntermission = false;
