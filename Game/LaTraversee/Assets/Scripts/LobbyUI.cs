@@ -99,6 +99,11 @@ public class LobbyUI : MonoBehaviour
             networkManager.EnqueueLobbyAction(HandleGameStarted);
         });
 
+        // Play Again: server confirmed restart, re-show lobby
+        networkManager.socket.On("game_restarted", (response) => {
+            networkManager.EnqueueLobbyAction(HandleGameRestarted);
+        });
+
         if (statusText != null)
         {
             statusText.text = "En attente de joueurs...";
@@ -182,5 +187,29 @@ public class LobbyUI : MonoBehaviour
         {
             networkManager.StartArenaPhase();
         }
+    }
+
+    private void HandleGameRestarted()
+    {
+        // Re-show the lobby panel
+        if (lobbyPanel != null)
+        {
+            lobbyPanel.SetActive(true);
+        }
+
+        if (statusText != null)
+        {
+            statusText.text = "En attente de joueurs...";
+        }
+
+        // Restart lobby music
+        if (audioSource != null && lobbyMusic != null)
+        {
+            audioSource.clip = lobbyMusic;
+            audioSource.loop = true;
+            audioSource.Play();
+        }
+
+        Debug.Log("LobbyUI: Game restarted. Lobby is open again.");
     }
 }

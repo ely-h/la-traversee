@@ -63,6 +63,7 @@ public class NetworkManager : MonoBehaviour
     public GameObject gameOverPanel;
     public TMPro.TextMeshProUGUI gameOverTeamText;
     public TMPro.TextMeshProUGUI gameOverPlayersText;
+    public UnityEngine.UI.Button playAgainButton;
 
     public TMPro.TextMeshProUGUI compteurText;
     private Process localServerProcess;
@@ -97,6 +98,12 @@ public class NetworkManager : MonoBehaviour
         else
         {
             PlayGameMusic();
+        }
+
+        // Wire Play Again button
+        if (playAgainButton != null)
+        {
+            playAgainButton.onClick.AddListener(PlayAgain);
         }
 
         // Ecoute connexion
@@ -757,6 +764,54 @@ public class NetworkManager : MonoBehaviour
                 winners = winnerPseudos.ToArray() 
             });
         }
+    }
+
+    /// <summary>
+    /// Called by the Play Again button on the GameOver panel.
+    /// Resets the full Unity game state and tells the server to go back to lobby.
+    /// </summary>
+    public void PlayAgain()
+    {
+        Debug.Log("PlayAgain: Resetting game state for a new round.");
+
+        // 1. Stop any running coroutines (intermission, countdown)
+        StopAllCoroutines();
+        arenaStartCoroutine = null;
+
+        // 2. Destroy all player GameObjects
+        foreach (var kvp in players)
+        {
+            if (kvp.Value != null)
+            {
+                Destroy(kvp.Value);
+            }
+        }
+        players.Clear();
+        playerInputs.Clear();
+        dashEndTimes.Clear();
+        dashCooldownEndTimes.Clear();
+
+        // 3. Reset game state variables
+        partieEnCours = false;
+        enIntermission = false;
+        canMove = false;
+        mancheCourante = 1;
+        tempsRestant = 90f;
+        countdownSoundPlayed = false;
+
+        // 4. Reset UI
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
+        if (chronoText != null) chronoText.text = "EN ATTENTE";
+        if (compteurText != null) compteurText.text = "Lobby";
+        if (audioSource != null) audioSource.Stop();
+
+        // 5. Tell the server to go back to lobby
+        if (socket != null)
+        {
+            socket.Emit("restart_game");
+        }
+
+        Debug.Log("PlayAgain: Reset complete. Waiting for players in lobby.");
     }
 
     // Coroutine d'intermission entre les manches

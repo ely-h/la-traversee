@@ -301,6 +301,23 @@ socket.on('resetUI', () => {
     document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
 });
 
+// Play Again: Server tells all clients the game restarted, go back to lobby/waiting
+socket.on('game_restarted', () => {
+    isInGame = false;
+    isCountingDown = false;
+    dashButton.disabled = false;
+    dashButton.textContent = 'Dash';
+    document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
+
+    if (joinedPlayer) {
+        showScreen('waiting');
+        waitingStatus.innerText = 'En attente du lancement par l\'hote...';
+        waitingPlayerName.innerText = `Joueur: ${joinedPlayer.pseudo}`;
+    } else {
+        showScreen('login');
+    }
+});
+
 // iOS Safari Fix: Prevent native scroll/rubber-banding to ensure NippleJS gets exclusive touch processing
 uiContainer.addEventListener('touchmove', function (e) {
     e.preventDefault();

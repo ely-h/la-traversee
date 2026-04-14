@@ -296,6 +296,25 @@ io.on('connection', (socket) => {
         io.emit('gameOver', data);
     });
 
+    // Play Again: Host wants to restart the game and go back to lobby
+    socket.on('restart_game', () => {
+        if (socket.id !== hostSocketId) {
+            return; // Only the host can restart
+        }
+
+        console.log('[Restart] Host triggered a game restart. Returning to lobby.');
+        gameState = 'lobby';
+
+        // Reset all player teams back to survivor
+        for (const [id, player] of players) {
+            player.team = 'survivor';
+        }
+
+        // Notify all clients (phones) to return to lobby
+        io.emit('game_restarted');
+        broadcastLobbyState();
+    });
+
     socket.on('disconnect', () => {
         console.log('Deconnexion socket:', socket.id);
 
