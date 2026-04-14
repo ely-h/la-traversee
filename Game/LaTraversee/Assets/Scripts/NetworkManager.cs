@@ -73,7 +73,6 @@ public class NetworkManager : MonoBehaviour
     public AudioClip gameMusic;
     private bool countdownSoundPlayed = false;
 
-
     void Start()
     {
         Debug.Log("Le script se lance bien !");
@@ -784,6 +783,21 @@ public class NetworkManager : MonoBehaviour
         // Compte à rebours pour la manche 2
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
         yield return new WaitForSeconds(2f);
+
+        if (chronoText != null) chronoText.text = "10...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "9...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "8...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "7...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "6...";
+        yield return new WaitForSeconds(1f);
 
         audioSource?.PlayOneShot(tickSound);
 
