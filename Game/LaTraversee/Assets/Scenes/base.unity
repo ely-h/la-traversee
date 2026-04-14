@@ -1813,11 +1813,11 @@ MonoBehaviour:
   compteurText: {fileID: 2073878482}
   startInLobby: 1
   audioSource: {fileID: 544840437}
-  tickSound: {fileID: 8300000, guid: 8bcfcd893355caf469923ad577afb747, type: 3}
-  intermissionMusic: {fileID: 8300000, guid: acdc7e100b7262946b50aca897bcbb80, type: 3}
-  zombiesWinSound: {fileID: 8300000, guid: a5f63a25e95f0964abc2b5a0d44a7a60, type: 3}
-  survivorsWinSound: {fileID: 8300000, guid: 0ce3ea0523b5b854db560fbd2a7dc37f, type: 3}
-  gameMusic: {fileID: 8300000, guid: a8378e83bf618424086361847ce17f98, type: 3}
+  tickSound: {fileID: 8300000, guid: c2f794c9c7a5569498b3096a6b26f5dc, type: 3}
+  intermissionMusic: {fileID: 8300000, guid: da0c0501452be7545bdab9129d6e61bf, type: 3}
+  zombiesWinSound: {fileID: 8300000, guid: 69309e27158761d42894bec530718e0d, type: 3}
+  survivorsWinSound: {fileID: 8300000, guid: 2cbe3a9783b2a8746a2bcbc1cb45fd49, type: 3}
+  gameMusic: {fileID: 8300000, guid: 07eee5da1cb5fc645a93deb7bbb654d2, type: 3}
 --- !u!4 &544840436
 Transform:
   m_ObjectHideFlags: 0
@@ -12118,8 +12118,8 @@ MonoBehaviour:
   joinUrlText: {fileID: 1385163699}
   startButton: {fileID: 287751819}
   qrCodeDisplay: {fileID: 717933247}
-  audioSource: {fileID: 0}
-  lobbyMusic: {fileID: 0}
+  audioSource: {fileID: 544840437}
+  lobbyMusic: {fileID: 8300000, guid: 3e733b06ba0406a4dad48549321117f2, type: 3}
 --- !u!4 &1568922944
 Transform:
   m_ObjectHideFlags: 0
