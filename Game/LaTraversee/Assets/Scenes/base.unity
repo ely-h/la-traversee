@@ -1795,8 +1795,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   playerPrefab: {fileID: 7278444566284445561, guid: 572225b2f8b9d1e48b7dd02a283fe7bc, type: 3}
-  survivorSpeed: 2.25
-  infectedSpeed: 2.4
+  survivorSpeed: 1.7
+  infectedSpeed: 2
   canMove: 0
   chronoText: {fileID: 8428691}
   tempsRestant: 90
@@ -11893,7 +11893,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1591210610
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12244,7 +12244,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 9.1017, y: -120}
+  m_AnchoredPosition: {x: 9.101685, y: -120}
   m_SizeDelta: {x: 1683.2166, y: -240}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1975267878
