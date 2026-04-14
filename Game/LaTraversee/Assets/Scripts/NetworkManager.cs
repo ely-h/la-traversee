@@ -62,7 +62,7 @@ public class NetworkManager : MonoBehaviour
     [Header("End Screen UI")]
     public GameObject gameOverPanel;
     public TMPro.TextMeshProUGUI gameOverTeamText;
-    public TMPro.TextMeshProUGUI gameOverPlayersText;
+    public WinnerListUI winnerListUI;
     public UnityEngine.UI.Button playAgainButton;
 
     public TMPro.TextMeshProUGUI compteurText;
@@ -751,9 +751,9 @@ public class NetworkManager : MonoBehaviour
 
         if (gameOverPanel != null) gameOverPanel.SetActive(true);
         if (gameOverTeamText != null) gameOverTeamText.text = winningTeamMsg;
-        if (gameOverPlayersText != null) 
+        if (winnerListUI != null)
         {
-            gameOverPlayersText.text = string.Join("\n", winnerPseudos);
+            winnerListUI.PopulateWinners(winnerPseudos);
         }
 
         if (socket != null) 
