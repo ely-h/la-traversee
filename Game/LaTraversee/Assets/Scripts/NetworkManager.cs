@@ -37,7 +37,8 @@ public class NetworkManager : MonoBehaviour
 {
     public SocketIOUnity socket;
     public GameObject playerPrefab;
-    public float speed = 5f;
+    [SerializeField] private float survivorSpeed = 2.25f;
+    [SerializeField] private float infectedSpeed = 2.35f;
 
     private Dictionary<string, GameObject> players = new Dictionary<string, GameObject>();
     private Dictionary<string, Vector2> playerInputs = new Dictionary<string, Vector2>();
@@ -57,6 +58,11 @@ public class NetworkManager : MonoBehaviour
     public float dashSpeedMultiplier = 3f;
     public float dashDuration = 0.2f;
     public float dashCooldown = 5f; 
+
+    [Header("End Screen UI")]
+    public GameObject gameOverPanel;
+    public TMPro.TextMeshProUGUI gameOverTeamText;
+    public TMPro.TextMeshProUGUI gameOverPlayersText;
 
     public TMPro.TextMeshProUGUI compteurText;
     private Process localServerProcess;
@@ -329,8 +335,9 @@ public class NetworkManager : MonoBehaviour
 
             UpdateCompteur();
             CheckAllSurvivorsSafe();
+            CheckVictoryConditions(); // Verify if disconnect or infection emptied a team
 
-            if (tempsRestant <= 0)
+            if (partieEnCours && tempsRestant <= 0)
             {
                 if (mancheCourante == 1)
                 {
@@ -338,21 +345,7 @@ public class NetworkManager : MonoBehaviour
                 }
                 else
                 {
-                    tempsRestant = 0;
-                    partieEnCours = false;
-                    chronoText.text = "VICTOIRE DES SURVIVANTS !";
-
-                    // Arrêt de la musique de jeu
-                    if (audioSource != null) audioSource.Stop();
-
-                    if (audioSource != null && survivorsWinSound != null){
-                        audioSource.PlayOneShot(survivorsWinSound);
-                    }
-                    
-                    if (socket != null)
-                    {
-                        socket.Emit("gameOver", new { message = "LES SURVIVANTS ONT GAGNÉ !" });
-                    }
+                    TriggerGameOver(false);
                 }
             }
         }
@@ -382,14 +375,18 @@ public class NetworkManager : MonoBehaviour
                 continue;
             }
 
-            float currentSpeed = speed;
+            float baseSpeed = playerObj.CompareTag("Enemy") ? infectedSpeed : survivorSpeed;
+            float currentSpeed = baseSpeed;
             if (dashEndTimes.ContainsKey(playerId) && Time.time < dashEndTimes[playerId])
             {
-                currentSpeed = speed * dashSpeedMultiplier;
+                currentSpeed = baseSpeed * dashSpeedMultiplier;
             }
 
             Vector2 input = playerInputs[playerId];
             Vector2 newPos = rb.position + (input * currentSpeed * Time.fixedDeltaTime);
+
+            PlayerSpriteController sprCtrl = playerObj.GetComponent<PlayerSpriteController>();
+            if (sprCtrl != null) sprCtrl.UpdateDirection(input);
 
             float limiteGauche = -17.0f;
             PlayerCollision collision = playerObj.GetComponent<PlayerCollision>();
@@ -428,6 +425,13 @@ public class NetworkManager : MonoBehaviour
             if (textComponent != null)
             {
                 textComponent.text = pseudo;
+                
+                // Nouveauté : Apply the same color to the TextMeshPro outline dynamically
+                if (ColorUtility.TryParseHtmlString(hexColor, out newColor))
+                {
+                    textComponent.outlineColor = newColor;
+                    textComponent.outlineWidth = 0.2f; // Ensure width is non-zero so we can see the Outline
+                }
             }
 
             PlayerCollision collisionScript = newPlayer.GetComponent<PlayerCollision>();
@@ -664,43 +668,94 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    public void CheckZombiesWin()
+    public void CheckVictoryConditions()
     {
-        if (!partieEnCours) return;
+        if (!partieEnCours || enIntermission) return;
+
+        if (players.Count == 0) return;
 
         int survivants = 0;
+        int zombies = 0;
 
-        //compteur de survivants(joueurs pas taggs "Enemy")
         foreach (var kvp in players)
         {
-            if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))
+            if (kvp.Value != null)
             {
-                survivants++;
+                if (kvp.Value.CompareTag("Enemy"))
+                {
+                    zombies++;
+                }
+                else
+                {
+                    survivants++;
+                }
             }
         }
 
-        //si il y a des joueurs et aucun survivant, les zombies gagnent
-        if (players.Count > 0 && survivants == 0)
+        if (survivants == 0 && zombies > 0)
         {
-            partieEnCours = false;
+            TriggerGameOver(true);
+        }
+        else if (zombies == 0 && survivants > 0)
+        {
+            TriggerGameOver(false);
+        }
+    }
 
-            if (chronoText != null)
+    public void CheckZombiesWin()
+    {
+        CheckVictoryConditions();
+    }
+
+    public void TriggerGameOver(bool zombiesWon)
+    {
+        partieEnCours = false;
+        canMove = false;
+        tempsRestant = 0;
+
+        if (audioSource != null) audioSource.Stop();
+
+        string winningTeamMsg = zombiesWon ? "Les Infectés ont gagné !" : "Les Survivants ont gagné !";
+        string teamId = zombiesWon ? "Infectés" : "Survivants";
+
+        if (audioSource != null) 
+        {
+            audioSource.PlayOneShot(zombiesWon ? zombiesWinSound : survivorsWinSound);
+        }
+
+        if (chronoText != null) 
+        {
+            chronoText.text = zombiesWon ? "VICTOIRE DES INFECTÉS !" : "VICTOIRE DES SURVIVANTS !";
+        }
+
+        List<string> winnerPseudos = new List<string>();
+        foreach (var kvp in players) 
+        {
+            if (kvp.Value != null) 
             {
-                chronoText.text = "VICTOIRE DES ZOMBIES !";
+                bool isZombie = kvp.Value.CompareTag("Enemy");
+                if (zombiesWon == isZombie) 
+                {
+                    var tmpro = kvp.Value.GetComponentInChildren<TextMeshPro>();
+                    if (tmpro != null) winnerPseudos.Add(tmpro.text);
+                }
             }
+        }
 
-            // Arrêt de la musique de jeu
-            if (audioSource != null) audioSource.Stop();
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        if (gameOverTeamText != null) gameOverTeamText.text = winningTeamMsg;
+        if (gameOverPlayersText != null) 
+        {
+            gameOverPlayersText.text = string.Join("\n", winnerPseudos);
+        }
 
-            if (audioSource != null && zombiesWinSound != null){
-                audioSource.PlayOneShot(zombiesWinSound);
-            }
-
-            //envoi du message de fin de partie au serveur node.js et aux telephones
-            if (socket != null)
-            {
-                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGNÉ !" });
-            }
+        if (socket != null) 
+        {
+            socket.Emit("gameOver", new { 
+                message = winningTeamMsg, 
+                winningTeam = teamId, 
+                winners = winnerPseudos.ToArray() 
+            });
         }
     }
 
@@ -728,13 +783,16 @@ public class NetworkManager : MonoBehaviour
                 else if (col != null && !col.isSafe)
                 {
                     p.tag = "Enemy";
-                    p.GetComponent<SpriteRenderer>().color = new Color(0.31f, 0.41f, 0.13f);
+                    PlayerSpriteController sprCtrl = p.GetComponent<PlayerSpriteController>();
+                    if (sprCtrl != null) sprCtrl.SetState(PlayerState.Infected);
                     SetPlayerPosition(p, new Vector2(0f, randomY));
                     if (socket != null) socket.Emit("playerInfected", new { id = pId });
                 }
                 else if (col != null && col.isSafe)
                 {
                     col.isSafe = false;
+                    PlayerSpriteController sprCtrl = p.GetComponent<PlayerSpriteController>();
+                    if (sprCtrl != null) sprCtrl.SetState(PlayerState.Survivor);
                     Color c = p.GetComponent<SpriteRenderer>().color;
                     c.a = 1f;
                     p.GetComponent<SpriteRenderer>().color = c;

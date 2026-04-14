@@ -25,7 +25,8 @@ body {
 
 #ui-container,
 #login-container,
-#waiting-container {
+#waiting-container,
+#game-over-container {
     width: 100%;
     height: 100dvh;
     box-sizing: border-box;
@@ -41,7 +42,8 @@ body {
 }
 
 #waiting-container,
-#login-container {
+#login-container,
+#game-over-container {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -71,7 +73,8 @@ body {
 }
 
 .login-card,
-.waiting-card {
+.waiting-card,
+.game-over-card {
     background-color: var(--menthe);
     border: 5px solid var(--stroke-color);
     border-radius: 30px;
@@ -84,7 +87,8 @@ body {
     margin-bottom: 40px;
 }
 
-.waiting-card {
+.waiting-card,
+.game-over-card {
     align-items: center;
     text-align: center;
 }
@@ -96,11 +100,53 @@ body {
 }
 
 .login-card label,
-.waiting-card p {
+.waiting-card p,
+#game-over-message {
     font-size: 1.2rem;
     font-weight: bold;
     margin-bottom: 10px;
     text-shadow: 1.5px 1.5px 0 var(--stroke-color), -1.5px -1.5px 0 var(--stroke-color), 1.5px -1.5px 0 var(--stroke-color), -1.5px 1.5px 0 var(--stroke-color);
+}
+
+#winning-team-text {
+    align-self: center;
+    margin-top: 0;
+    font-size: 2rem;
+    text-shadow: 2px 2px 0 var(--stroke-color), -2px -2px 0 var(--stroke-color), 2px -2px 0 var(--stroke-color), -2px 2px 0 var(--stroke-color);
+}
+
+#winners-list-container {
+    width: 100%;
+    background-color: var(--vert-menthe);
+    border: 3px solid var(--stroke-color);
+    border-radius: 20px;
+    padding: 15px;
+    box-sizing: border-box;
+    margin-top: 10px;
+    color: var(--stroke-color);
+}
+
+#winners-list-container h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+#winners-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+#winners-list li {
+    font-weight: bold;
+    padding: 5px 0;
+    border-bottom: 1px dashed var(--stroke-color);
+}
+
+#winners-list li:last-child {
+    border-bottom: none;
 }
 
 #pseudo-input {
@@ -117,23 +163,30 @@ body {
     outline: none;
 }
 
-#color-picker {
-    display: flex;
-    gap: 15px;
+#color-picker-input {
+    width: 100%;
+    height: 45px;
     margin-bottom: 30px;
+    padding: 0;
+    border: none;
+    background: none;
+    outline: none;
+    cursor: pointer;
+    align-self: center;
 }
 
-.color-btn {
-    width: 35px;
-    height: 35px;
-    border-radius: 50%;
+#color-picker-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+#color-picker-input::-webkit-color-swatch {
     border: 3px solid var(--stroke-color);
+    border-radius: 20px;
 }
 
-.color-btn.selected {
-    border-color: white;
-    transform: scale(1.15);
-    box-shadow: 0 0 8px white;
+#color-picker-input::-moz-color-swatch {
+    border: 3px solid var(--stroke-color);
+    border-radius: 20px;
 }
 
 #join-button,
@@ -158,7 +211,7 @@ body {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 50%;
     position: relative;
-    border: 3px solid rgba(255,255,255,0.3);
+    border: 3px solid rgba(255, 255, 255, 0.3);
     touch-action: none;
 }
 
