@@ -315,6 +315,22 @@ io.on('connection', (socket) => {
         broadcastLobbyState();
     });
 
+    // Re-emit playerJoin for all connected players so Unity re-spawns them after a restart
+    socket.on('request_rejoin_all', () => {
+        if (socket.id !== hostSocketId) {
+            return; // Only the host can request this
+        }
+
+        console.log(`[Rejoin] Host requested re-join for ${players.size} player(s).`);
+        for (const [id, player] of players) {
+            io.to(hostSocketId).emit('playerJoin', {
+                id: player.id,
+                pseudo: player.pseudo,
+                color: player.color
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         console.log('Deconnexion socket:', socket.id);
 

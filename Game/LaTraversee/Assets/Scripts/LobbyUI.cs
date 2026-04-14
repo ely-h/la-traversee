@@ -210,6 +210,13 @@ public class LobbyUI : MonoBehaviour
             audioSource.Play();
         }
 
+        // Ask the server to re-emit playerJoin for every connected player.
+        // This re-populates NetworkManager.players dict which was cleared during PlayAgain().
+        if (networkManager != null && networkManager.socket != null)
+        {
+            networkManager.socket.Emit("request_rejoin_all");
+        }
+
         Debug.Log("LobbyUI: Game restarted. Lobby is open again.");
     }
 }
