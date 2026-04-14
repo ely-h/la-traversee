@@ -3,6 +3,7 @@ const socket = io();
 const loginContainer = document.getElementById('login-container');
 const waitingContainer = document.getElementById('waiting-container');
 const uiContainer = document.getElementById('ui-container');
+const gameOverContainer = document.getElementById('game-over-container');
 const joinButton = document.getElementById('join-button');
 const pseudoInput = document.getElementById('pseudo-input');
 const colorPickerInput = document.getElementById('color-picker-input');
@@ -13,6 +14,10 @@ const waitingStatus = document.getElementById('waiting-status');
 const waitingPlayerName = document.getElementById('waiting-player-name');
 const waitingCount = document.getElementById('waiting-count');
 const errorMsg = document.getElementById('error-message');
+const gameOverTitle = document.getElementById('game-over-title');
+const winningTeamText = document.getElementById('winning-team-text');
+const winnersList = document.getElementById('winners-list');
+const gameOverMessage = document.getElementById('game-over-message');
 
 let selectedColor = '#ff5757';
 let joinedPlayer = null;
@@ -24,6 +29,7 @@ function showScreen(screen) {
     loginContainer.style.display = screen === 'login' ? 'flex' : 'none';
     waitingContainer.style.display = screen === 'waiting' ? 'flex' : 'none';
     uiContainer.style.display = screen === 'game' ? 'flex' : 'none';
+    gameOverContainer.style.display = screen === 'gameover' ? 'flex' : 'none';
 }
 
 function ensureJoystick() {
@@ -195,18 +201,42 @@ socket.on('youAreSafe', () => {
 });
 
 socket.on('gameOver', (data) => {
-    joystickZone.style.display = 'none';
-    dashButton.style.display = 'none';
-    statusText.innerText = data.message;
-    document.body.style.backgroundColor = '#7c6e6e';
     socket.emit('playerMove', { x: 0, y: 0 });
+    showScreen('gameover');
+    
+    document.body.style.backgroundColor = 'var(--marron-gris)'; // Default nice background
+
+    if (data.winningTeam) {
+        winningTeamText.innerText = `Les ${data.winningTeam} ont gagné !`;
+        if (data.winningTeam === 'Survivants') {
+            document.body.style.backgroundColor = 'var(--menthe)';
+        } else if (data.winningTeam === 'Infectés') {
+            document.body.style.backgroundColor = '#4f6920';
+        }
+    } else {
+        winningTeamText.innerText = "Partie Terminée";
+    }
+
+    winnersList.innerHTML = '';
+    if (data.winners && data.winners.length > 0) {
+        data.winners.forEach(pseudo => {
+            const li = document.createElement('li');
+            li.innerText = pseudo;
+            winnersList.appendChild(li);
+        });
+    } else {
+        const li = document.createElement('li');
+        li.innerText = "Aucun survivant (ou information indisponible).";
+        winnersList.appendChild(li);
+    }
+    
+    gameOverMessage.innerText = data.message;
 });
 
 socket.on('resetUI', () => {
     statusText.innerText = 'STATUT: Survivant';
-    joystickZone.style.display = 'block';
-    dashButton.style.display = 'block';
     dashButton.disabled = false;
     dashButton.textContent = 'Dash';
+    showScreen('game');
     document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
 });

@@ -59,6 +59,11 @@ public class NetworkManager : MonoBehaviour
     public float dashDuration = 0.2f;
     public float dashCooldown = 5f; 
 
+    [Header("End Screen UI")]
+    public GameObject gameOverPanel;
+    public TMPro.TextMeshProUGUI gameOverTeamText;
+    public TMPro.TextMeshProUGUI gameOverPlayersText;
+
     public TMPro.TextMeshProUGUI compteurText;
     private Process localServerProcess;
     public bool startInLobby = true;
@@ -339,21 +344,7 @@ public class NetworkManager : MonoBehaviour
                 }
                 else
                 {
-                    tempsRestant = 0;
-                    partieEnCours = false;
-                    chronoText.text = "VICTOIRE DES SURVIVANTS !";
-
-                    // Arrêt de la musique de jeu
-                    if (audioSource != null) audioSource.Stop();
-
-                    if (audioSource != null && survivorsWinSound != null){
-                        audioSource.PlayOneShot(survivorsWinSound);
-                    }
-                    
-                    if (socket != null)
-                    {
-                        socket.Emit("gameOver", new { message = "LES SURVIVANTS ONT GAGNÉ !" });
-                    }
+                    TriggerGameOver(false);
                 }
             }
         }
@@ -694,25 +685,59 @@ public class NetworkManager : MonoBehaviour
         //si il y a des joueurs et aucun survivant, les zombies gagnent
         if (players.Count > 0 && survivants == 0)
         {
-            partieEnCours = false;
+            TriggerGameOver(true);
+        }
+    }
 
-            if (chronoText != null)
+    public void TriggerGameOver(bool zombiesWon)
+    {
+        partieEnCours = false;
+        canMove = false;
+        tempsRestant = 0;
+
+        if (audioSource != null) audioSource.Stop();
+
+        string winningTeamMsg = zombiesWon ? "Les Infectés ont gagné !" : "Les Survivants ont gagné !";
+        string teamId = zombiesWon ? "Infectés" : "Survivants";
+
+        if (audioSource != null) 
+        {
+            audioSource.PlayOneShot(zombiesWon ? zombiesWinSound : survivorsWinSound);
+        }
+
+        if (chronoText != null) 
+        {
+            chronoText.text = zombiesWon ? "VICTOIRE DES INFECTÉS !" : "VICTOIRE DES SURVIVANTS !";
+        }
+
+        List<string> winnerPseudos = new List<string>();
+        foreach (var kvp in players) 
+        {
+            if (kvp.Value != null) 
             {
-                chronoText.text = "VICTOIRE DES ZOMBIES !";
+                bool isZombie = kvp.Value.CompareTag("Enemy");
+                if (zombiesWon == isZombie) 
+                {
+                    var tmpro = kvp.Value.GetComponentInChildren<TextMeshPro>();
+                    if (tmpro != null) winnerPseudos.Add(tmpro.text);
+                }
             }
+        }
 
-            // Arrêt de la musique de jeu
-            if (audioSource != null) audioSource.Stop();
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        if (gameOverTeamText != null) gameOverTeamText.text = winningTeamMsg;
+        if (gameOverPlayersText != null) 
+        {
+            gameOverPlayersText.text = string.Join("\n", winnerPseudos);
+        }
 
-            if (audioSource != null && zombiesWinSound != null){
-                audioSource.PlayOneShot(zombiesWinSound);
-            }
-
-            //envoi du message de fin de partie au serveur node.js et aux telephones
-            if (socket != null)
-            {
-                socket.Emit("gameOver", new { message = "LES ZOMBIES ONT GAGNÉ !" });
-            }
+        if (socket != null) 
+        {
+            socket.Emit("gameOver", new { 
+                message = winningTeamMsg, 
+                winningTeam = teamId, 
+                winners = winnerPseudos.ToArray() 
+            });
         }
     }
 

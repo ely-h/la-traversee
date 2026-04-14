@@ -41,6 +41,18 @@
         <button id="dash-button">Dash</button>
     </div>
 
+    <div id="game-over-container" style="display: none;">
+        <h1 class="game-title" id="game-over-title">Partie Terminée</h1>
+        <div class="game-over-card">
+            <h2 id="winning-team-text">L'équipe a gagné !</h2>
+            <div id="winners-list-container">
+                <h3>Joueurs Victorieux:</h3>
+                <ul id="winners-list"></ul>
+            </div>
+            <p id="game-over-message"></p>
+        </div>
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
     <script src="client.js"></script>

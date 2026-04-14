@@ -206,7 +206,8 @@ io.on('connection', (socket) => {
         const player = {
             id: socket.id,
             pseudo,
-            color
+            color,
+            team: 'survivor'
         };
 
         players.set(socket.id, player);
@@ -257,19 +258,40 @@ io.on('connection', (socket) => {
     });
 
     socket.on('playerInfected', (data) => {
+        if (players.has(data.id)) players.get(data.id).team = 'infected';
         io.to(data.id).emit('youAreInfected');
     });
 
     socket.on('playerSafe', (data) => {
+        if (players.has(data.id)) players.get(data.id).team = 'survivor';
         io.to(data.id).emit('youAreSafe');
     });
 
     socket.on('playerReset', (data) => {
+        if (players.has(data.id)) players.get(data.id).team = 'survivor';
         io.to(data.id).emit('resetUI');
     });
 
     socket.on('gameOver', (data) => {
         console.log(`[Game Over] ${data.message}`);
+
+        if (!data.winningTeam || !data.winners) {
+            let winningTeam = 'inconnu';
+            let winners = [];
+            const messageUpper = (data.message || '').toUpperCase();
+            
+            if (messageUpper.includes('SURVIVANT')) {
+                winningTeam = 'Survivants';
+                winners = Array.from(players.values()).filter(p => p.team === 'survivor').map(p => p.pseudo);
+            } else if (messageUpper.includes('ZOMBIE') || messageUpper.includes('INFECT')) {
+                winningTeam = 'Infectés';
+                winners = Array.from(players.values()).filter(p => p.team === 'infected').map(p => p.pseudo);
+            }
+
+            data.winningTeam = winningTeam;
+            data.winners = winners;
+        }
+        
         io.emit('gameOver', data);
     });
 
