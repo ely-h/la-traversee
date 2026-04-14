@@ -275,20 +275,22 @@ io.on('connection', (socket) => {
     socket.on('gameOver', (data) => {
         console.log(`[Game Over] ${data.message}`);
 
-        let winningTeam = 'inconnu';
-        let winners = [];
-        const messageUpper = (data.message || '').toUpperCase();
-        
-        if (messageUpper.includes('SURVIVANT')) {
-            winningTeam = 'Survivants';
-            winners = Array.from(players.values()).filter(p => p.team === 'survivor').map(p => p.pseudo);
-        } else if (messageUpper.includes('ZOMBIE') || messageUpper.includes('INFECT')) {
-            winningTeam = 'Infectés';
-            winners = Array.from(players.values()).filter(p => p.team === 'infected').map(p => p.pseudo);
-        }
+        if (!data.winningTeam || !data.winners) {
+            let winningTeam = 'inconnu';
+            let winners = [];
+            const messageUpper = (data.message || '').toUpperCase();
+            
+            if (messageUpper.includes('SURVIVANT')) {
+                winningTeam = 'Survivants';
+                winners = Array.from(players.values()).filter(p => p.team === 'survivor').map(p => p.pseudo);
+            } else if (messageUpper.includes('ZOMBIE') || messageUpper.includes('INFECT')) {
+                winningTeam = 'Infectés';
+                winners = Array.from(players.values()).filter(p => p.team === 'infected').map(p => p.pseudo);
+            }
 
-        data.winningTeam = winningTeam;
-        data.winners = winners;
+            data.winningTeam = winningTeam;
+            data.winners = winners;
+        }
         
         io.emit('gameOver', data);
     });
