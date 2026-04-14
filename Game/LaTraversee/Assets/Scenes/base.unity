@@ -10729,7 +10729,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuarantineSpawner
   quarantinePrefab: {fileID: 36338378350393313, guid: a2c539cd81de04c45bd014a688f65dff, type: 3}
-  tailleZone: 1.2
+  tailleZone: 1.5
 --- !u!4 &1476954333
 Transform:
   m_ObjectHideFlags: 0
