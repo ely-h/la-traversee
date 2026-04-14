@@ -70,8 +70,8 @@ public class NetworkManager : MonoBehaviour
     public AudioClip zombiesWinSound;
     public AudioClip survivorsWinSound;
     public AudioClip gameMusic;
+    public AudioClip countdownInterRound;
     private bool countdownSoundPlayed = false;
-
 
     void Start()
     {
@@ -770,13 +770,19 @@ public class NetworkManager : MonoBehaviour
         if (chronoText != null) chronoText.text = "MANCHE 2 DANS...";
         yield return new WaitForSeconds(2f);
 
-        audioSource?.PlayOneShot(tickSound);
+        if (chronoText != null) chronoText.text = "7...";
+        yield return new WaitForSeconds(1f);
+
+        if (chronoText != null) chronoText.text = "6...";
+        yield return new WaitForSeconds(1f);
 
         if (chronoText != null) chronoText.text = "5...";
         yield return new WaitForSeconds(1f);
 
         if (chronoText != null) chronoText.text = "4...";
         yield return new WaitForSeconds(1f);
+
+        audioSource?.PlayOneShot(countdownInterRound);
 
         if (chronoText != null) chronoText.text = "3...";
         yield return new WaitForSeconds(1f);
