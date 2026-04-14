@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { Server } = require('socket.io');
-
 // --- Anti-Profanity Hybrid Filter Setup (Global Scope) ---
 const CUSTOM_WORDS = [
     // --- English Extreme Slurs & Hate Speech ---
@@ -120,11 +119,10 @@ function containsProfanity(text) {
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-    pingInterval: 10000,
-    pingTimeout: 5000
+    pingInterval: 25000,
+    pingTimeout: 60000
 });
 const PORT = 4242;
-
 let isShuttingDown = false;
 let hostSocketId = null;
 let gameState = 'lobby';

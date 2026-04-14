@@ -21,6 +21,13 @@ body {
     width: 100%;
     height: 100%;
     overscroll-behavior: none;
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+    -moz-user-select: none; /* Old versions of Firefox */
+    -ms-user-select: none; /* Internet Explorer/Edge */
+    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
 }
 
 #ui-container,
@@ -213,6 +220,9 @@ body {
     position: relative;
     border: 3px solid rgba(255, 255, 255, 0.3);
     touch-action: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 #dash-button {
@@ -245,4 +255,39 @@ body {
         left: 50%;
         transform: translateX(-50%);
     }
+}
+
+#reconnect-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Semi-transparent black */
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+}
+
+#reconnect-overlay h2 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: var(--corail);
+    text-shadow: 2px 2px 0 var(--stroke-color);
+}
+
+#reconnect-overlay p {
+    font-size: 1.5rem;
+    font-weight: bold;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }

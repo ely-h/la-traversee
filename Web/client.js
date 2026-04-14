@@ -18,12 +18,14 @@ const gameOverTitle = document.getElementById('game-over-title');
 const winningTeamText = document.getElementById('winning-team-text');
 const winnersList = document.getElementById('winners-list');
 const gameOverMessage = document.getElementById('game-over-message');
+const reconnectOverlay = document.getElementById('reconnect-overlay');
 
 let selectedColor = '#ff5757';
 let joinedPlayer = null;
 let joystick = null;
 let isInGame = false;
 let isCountingDown = false;
+let disconnectTimeout = null;
 
 function showScreen(screen) {
     loginContainer.style.display = screen === 'login' ? 'flex' : 'none';
@@ -44,24 +46,43 @@ function ensureJoystick() {
         color: 'white'
     });
 
+    let isThrottled = false;
+    let pendingMoveEvent = null;
+    const THROTTLE_MS = 80; // ~12.5 Hz (1000 / 80)
+
+    function sendMove(x, y) {
+        socket.emit('playerMove', { x, y });
+    }
+
+    function stopMove() {
+        pendingMoveEvent = null; // Clear any pending queued moves
+        sendMove(0, 0); // Send final move immediately to prevent floating
+    }
+
     joystick.on('move', (evt, data) => {
-        socket.emit('playerMove', {
-            x: data.vector.x,
-            y: data.vector.y * -1
-        });
+        const x = data.vector.x;
+        const y = data.vector.y * -1; // Invert Y axis
+
+        if (!isThrottled) {
+            sendMove(x, y);
+            isThrottled = true;
+
+            setTimeout(() => {
+                isThrottled = false;
+                if (pendingMoveEvent) {
+                    sendMove(pendingMoveEvent.x, pendingMoveEvent.y);
+                    pendingMoveEvent = null;
+                }
+            }, THROTTLE_MS);
+        } else {
+            // Keep track of the freshest move while waiting for the cooldown
+            pendingMoveEvent = { x, y };
+        }
     });
 
-    joystick.on('end', () => {
-        socket.emit('playerMove', { x: 0, y: 0 });
-    });
-
-    joystickZone.addEventListener('touchend', () => {
-        socket.emit('playerMove', { x: 0, y: 0 });
-    });
-
-    joystickZone.addEventListener('touchcancel', () => {
-        socket.emit('playerMove', { x: 0, y: 0 });
-    });
+    joystick.on('end', stopMove);
+    joystickZone.addEventListener('touchend', stopMove);
+    joystickZone.addEventListener('touchcancel', stopMove);
 }
 
 function updateWaitingRoom(payload) {
@@ -72,11 +93,11 @@ function updateWaitingRoom(payload) {
     const playerCount = payload.players.length;
     if (!isCountingDown) {
         waitingStatus.innerText = payload.state === 'lobby'
-            ? 'En attente du lancement par l hote...'
+            ? 'En attente du lancement par l\'hote...'
             : 'La partie est en cours.';
     }
     waitingPlayerName.innerText = `Joueur: ${joinedPlayer.pseudo}`;
-    waitingCount.innerText = `${playerCount} joueur(s) connecte(s)`;
+    waitingCount.innerText = `${playerCount} joueur(s) connecté(s)`;
 }
 
 function showController() {
@@ -117,6 +138,27 @@ joinButton.addEventListener('pointerdown', () => {
 
 socket.on('connect', () => {
     console.log('Connecte au serveur');
+    if (reconnectOverlay) {
+        reconnectOverlay.style.display = 'none';
+
+        // Restore default text and style for future disconnects
+        const p = reconnectOverlay.querySelector('p');
+        const h2 = reconnectOverlay.querySelector('h2');
+        if (h2) h2.innerText = 'Connexion perdue...';
+        if (p) {
+            p.innerText = 'Reconnexion en cours';
+            p.style.animation = '';
+            p.style.color = '';
+        }
+
+        clearTimeout(disconnectTimeout);
+    }
+});
+
+socket.on('connect_error', () => {
+    if (reconnectOverlay) {
+        reconnectOverlay.style.display = 'flex';
+    }
 });
 
 socket.on('player_registered', (player) => {
@@ -146,7 +188,7 @@ socket.on('game_countdown', (payload) => {
 
 socket.on('join_rejected', () => {
     showScreen('login');
-    waitingStatus.innerText = 'La partie a deja commence.';
+    waitingStatus.innerText = 'La partie a deja commencé.';
 });
 
 socket.on('invalid_username', (data) => {
@@ -182,12 +224,30 @@ dashButton.addEventListener('pointerdown', () => {
 });
 
 socket.on('disconnect', () => {
-    statusText.innerText = 'STATUT: Deconnecte';
+    statusText.innerText = 'STATUT: Déconnecté';
     waitingStatus.innerText = 'Connexion perdue.';
+    if (reconnectOverlay) {
+        reconnectOverlay.style.display = 'flex';
+
+        clearTimeout(disconnectTimeout);
+        disconnectTimeout = setTimeout(() => {
+            const h2 = reconnectOverlay.querySelector('h2');
+            const p = reconnectOverlay.querySelector('p');
+
+            if (h2) h2.innerText = 'Erreur Critique';
+            if (p) {
+                p.innerText = 'Fin de partie ou erreur de connexion.';
+                p.style.animation = 'none';
+                p.style.color = '#ff5757';
+            }
+
+            socket.disconnect(); // Prevent infinite reconnection loop if it's considered definitive
+        }, 30000);
+    }
 });
 
 socket.on('youAreInfected', () => {
-    statusText.innerText = 'STATUT: INFECTE (CHASSEZ LES AUTRES!)';
+    statusText.innerText = 'STATUT: INFECTÉ (CHASSEZ LES AUTRES!)';
     document.body.style.backgroundColor = '#4f6920';
 
     if ('vibrate' in navigator) {
@@ -203,7 +263,7 @@ socket.on('youAreSafe', () => {
 socket.on('gameOver', (data) => {
     socket.emit('playerMove', { x: 0, y: 0 });
     showScreen('gameover');
-    
+
     document.body.style.backgroundColor = 'var(--marron-gris)'; // Default nice background
 
     if (data.winningTeam) {
@@ -229,7 +289,7 @@ socket.on('gameOver', (data) => {
         li.innerText = "Aucun survivant (ou information indisponible).";
         winnersList.appendChild(li);
     }
-    
+
     gameOverMessage.innerText = data.message;
 });
 
@@ -240,3 +300,9 @@ socket.on('resetUI', () => {
     showScreen('game');
     document.body.style.backgroundColor = joinedPlayer ? joinedPlayer.color : selectedColor;
 });
+
+// iOS Safari Fix: Prevent native scroll/rubber-banding to ensure NippleJS gets exclusive touch processing
+uiContainer.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+}, { passive: false });
+
