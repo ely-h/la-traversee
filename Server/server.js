@@ -119,7 +119,10 @@ function containsProfanity(text) {
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    pingInterval: 10000,
+    pingTimeout: 5000
+});
 const PORT = 4242;
 
 let isShuttingDown = false;

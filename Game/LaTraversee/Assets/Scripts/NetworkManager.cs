@@ -335,8 +335,9 @@ public class NetworkManager : MonoBehaviour
 
             UpdateCompteur();
             CheckAllSurvivorsSafe();
+            CheckVictoryConditions(); // Verify if disconnect or infection emptied a team
 
-            if (tempsRestant <= 0)
+            if (partieEnCours && tempsRestant <= 0)
             {
                 if (mancheCourante == 1)
                 {
@@ -667,26 +668,43 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    public void CheckZombiesWin()
+    public void CheckVictoryConditions()
     {
-        if (!partieEnCours) return;
+        if (!partieEnCours || enIntermission) return;
+
+        if (players.Count == 0) return;
 
         int survivants = 0;
+        int zombies = 0;
 
-        //compteur de survivants(joueurs pas taggs "Enemy")
         foreach (var kvp in players)
         {
-            if (kvp.Value != null && !kvp.Value.CompareTag("Enemy"))
+            if (kvp.Value != null)
             {
-                survivants++;
+                if (kvp.Value.CompareTag("Enemy"))
+                {
+                    zombies++;
+                }
+                else
+                {
+                    survivants++;
+                }
             }
         }
 
-        //si il y a des joueurs et aucun survivant, les zombies gagnent
-        if (players.Count > 0 && survivants == 0)
+        if (survivants == 0 && zombies > 0)
         {
             TriggerGameOver(true);
         }
+        else if (zombies == 0 && survivants > 0)
+        {
+            TriggerGameOver(false);
+        }
+    }
+
+    public void CheckZombiesWin()
+    {
+        CheckVictoryConditions();
     }
 
     public void TriggerGameOver(bool zombiesWon)
