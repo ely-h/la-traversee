@@ -88,12 +88,21 @@ public class TitleScreenAutoSetup : EditorWindow
         // --- 5. Setup TitleScreenManager ---
         TitleScreenManager manager = canvas.gameObject.GetComponent<TitleScreenManager>();
         if (manager == null) manager = canvas.gameObject.AddComponent<TitleScreenManager>();
+
+        AudioSource titleAudioSource = titlePanel.GetComponent<AudioSource>();
+        if (titleAudioSource == null) titleAudioSource = titlePanel.AddComponent<AudioSource>();
+        titleAudioSource.playOnAwake = false;
+        titleAudioSource.loop = true;
+
+        AudioClip titleMusic = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Audio/accueil.wav");
         
         // We use SerializedObject to link private references from the editor script
         SerializedObject so = new SerializedObject(manager);
         so.FindProperty("titlePanel").objectReferenceValue = titlePanel;
         so.FindProperty("playButton").objectReferenceValue = btn;
         if (lobby != null) so.FindProperty("lobbyUI").objectReferenceValue = lobby;
+        so.FindProperty("titleAudioSource").objectReferenceValue = titleAudioSource;
+        if (titleMusic != null) so.FindProperty("titleMusic").objectReferenceValue = titleMusic;
         so.ApplyModifiedProperties();
 
         Debug.Log("Success: Title Screen created and references linked! Select the Canvas to see the setup.");

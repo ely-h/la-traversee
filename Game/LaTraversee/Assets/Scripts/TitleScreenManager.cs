@@ -14,7 +14,7 @@ public class TitleScreenManager : MonoBehaviour
     [SerializeField] private Button playButton;
 
     [Header("Audio")]
-    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioSource titleAudioSource;
     [SerializeField] private AudioClip titleMusic;
 
     private void Start()
@@ -25,30 +25,49 @@ public class TitleScreenManager : MonoBehaviour
         if (lobbyUI == null)
         {
             lobbyUI = FindObjectOfType<LobbyUI>();
-        }
-
-        // 2. Play Music if assigned
-        if (audioSource != null && titleMusic != null)
-        {
-            audioSource.clip = titleMusic;
-            audioSource.loop = true;
-            if (!audioSource.isPlaying)
+            if (lobbyUI != null)
             {
-                audioSource.Play();
+                Debug.Log("TitleScreenManager: Auto-located LobbyUI in scene.");
+            }
+            else
+            {
+                Debug.LogError("TitleScreenManager: Failed to find LobbyUI! Transition will not work.");
             }
         }
 
-        // 3. Ensure Title matches
+        // 2. Ensure Title matches
         if (titlePanel != null)
         {
             titlePanel.SetActive(true);
         }
 
-        // 4. Setup Button
+        if (titleAudioSource == null)
+        {
+            titleAudioSource = titlePanel != null
+                ? titlePanel.GetComponent<AudioSource>()
+                : GetComponent<AudioSource>();
+        }
+
+        if (titleAudioSource != null && titleMusic != null)
+        {
+            titleAudioSource.clip = titleMusic;
+            titleAudioSource.loop = true;
+
+            if (!titleAudioSource.isPlaying)
+            {
+                titleAudioSource.Play();
+            }
+        }
+
+        // 3. Setup Button
         if (playButton != null)
         {
             playButton.onClick.RemoveAllListeners();
             playButton.onClick.AddListener(OnPlayClicked);
+        }
+        else
+        {
+            Debug.LogError("TitleScreenManager: Play Button reference is MISSING!");
         }
     }
 
@@ -68,6 +87,11 @@ public class TitleScreenManager : MonoBehaviour
             titlePanel.SetActive(false);
         }
 
+        if (titleAudioSource != null && titleAudioSource.isPlaying)
+        {
+            titleAudioSource.Stop();
+        }
+
         // Signal Lobby to start
         lobbyUI.SetLobbyReady();
 
@@ -75,12 +99,10 @@ public class TitleScreenManager : MonoBehaviour
     }
 
     // Used by Editor script to link refs
-    public void Setup(GameObject panel, LobbyUI lobby, Button button, AudioSource audio, AudioClip music)
+    public void Setup(GameObject panel, LobbyUI lobby, Button button)
     {
         titlePanel = panel;
         lobbyUI = lobby;
         playButton = button;
-        audioSource = audio;
-        titleMusic = music;
     }
 }
