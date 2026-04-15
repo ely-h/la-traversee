@@ -2493,8 +2493,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetworkManager
   playerPrefab: {fileID: 7278444566284445561, guid: 572225b2f8b9d1e48b7dd02a283fe7bc, type: 3}
-  survivorSpeed: 1.7
-  infectedSpeed: 1.85
+  survivorSpeed: 1.8
+  infectedSpeed: 1.7
   canMove: 0
   chronoText: {fileID: 8428691}
   tempsRestant: 90
@@ -13254,7 +13254,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuarantineSpawner
   quarantinePrefab: {fileID: 36338378350393313, guid: a2c539cd81de04c45bd014a688f65dff, type: 3}
-  tailleZone: 8
+  tailleZone: 2
 --- !u!4 &1476954333
 Transform:
   m_ObjectHideFlags: 0

@@ -85,6 +85,23 @@ function ensureJoystick() {
     joystickZone.addEventListener('touchcancel', stopMove);
 }
 
+// Logic to handle screen orientation/size changes (Landscape fix)
+let resizeTimeout;
+window.addEventListener('resize', () => {
+    // Only bother recalculating if the user is actually playing
+    if (!isInGame || !joystick) return;
+
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        console.log('Screen size changed. Refreshing joystick boundaries...');
+        if (joystick) {
+            joystick.destroy();
+            joystick = null;
+        }
+        ensureJoystick();
+    }, 200); // 200ms debounce to avoid spamming during rotation
+});
+
 function updateWaitingRoom(payload) {
     if (!joinedPlayer) {
         return;
@@ -247,7 +264,7 @@ socket.on('disconnect', () => {
 });
 
 socket.on('youAreInfected', () => {
-    statusText.innerText = 'STATUT: INFECTÉ (CHASSEZ LES AUTRES!)';
+    statusText.innerText = 'STATUT: INFECTÉ';
     document.body.style.backgroundColor = '#4f6920';
 
     if ('vibrate' in navigator) {
