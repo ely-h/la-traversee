@@ -93,21 +93,75 @@ public class LobbyPlayerListUI : MonoBehaviour
         Transform existingScrollView = transform.Find("LobbyPlayersScrollView");
         if (existingScrollView != null)
         {
+            // Update its layout even if it exists
+            UpdateScrollViewLayout(existingScrollView.GetComponent<RectTransform>());
+
             Transform viewport = existingScrollView.Find("Viewport");
             if (viewport != null)
             {
                 contentParent = viewport.Find("Content");
                 FixViewportMaskAlpha(viewport);
+                
+                // Ensure all components are present and linked
+                SetupExistingScrollView(existingScrollView, viewport, contentParent);
             }
         }
 
-        // If still null, build it from scratch
+        // If still null or missing, build it from scratch
         if (contentParent == null)
         {
             BuildScrollView();
         }
 
         isInitialized = true;
+    }
+
+    private void UpdateScrollViewLayout(RectTransform svRT)
+    {
+        if (svRT == null) return;
+        svRT.anchorMin = new Vector2(0.5f, 0.5f);
+        svRT.anchorMax = new Vector2(0.5f, 0.5f);
+        svRT.sizeDelta = new Vector2(scrollViewWidth, scrollViewHeight);
+        svRT.anchoredPosition = scrollViewOffset;
+    }
+
+    private void SetupExistingScrollView(Transform scrollView, Transform viewport, Transform content)
+    {
+        // 1. ScrollRect
+        ScrollRect scrollRect = scrollView.GetComponent<ScrollRect>();
+        if (scrollRect == null) scrollRect = scrollView.gameObject.AddComponent<ScrollRect>();
+        
+        scrollRect.horizontal = false;
+        scrollRect.vertical = true;
+        scrollRect.movementType = ScrollRect.MovementType.Elastic;
+        scrollRect.scrollSensitivity = 30f;
+        scrollRect.viewport = viewport.GetComponent<RectTransform>();
+        scrollRect.content = content.GetComponent<RectTransform>();
+
+        // 2. Viewport Mask
+        if (viewport.GetComponent<Mask>() == null) viewport.gameObject.AddComponent<Mask>();
+        if (viewport.GetComponent<Image>() == null)
+        {
+            Image img = viewport.gameObject.AddComponent<Image>();
+            img.color = new Color(1, 1, 1, 1);
+        }
+
+        // 3. Content Layout & Fitter
+        if (content.GetComponent<VerticalLayoutGroup>() == null)
+        {
+            VerticalLayoutGroup vlg = content.gameObject.AddComponent<VerticalLayoutGroup>();
+            vlg.spacing = 4f;
+            vlg.padding = new RectOffset(10, 10, 8, 8);
+            vlg.childAlignment = TextAnchor.UpperCenter;
+            vlg.childControlWidth = true;
+            vlg.childControlHeight = false;
+            vlg.childForceExpandWidth = true;
+            vlg.childForceExpandHeight = false;
+        }
+
+        ContentSizeFitter csf = content.GetComponent<ContentSizeFitter>();
+        if (csf == null) csf = content.gameObject.AddComponent<ContentSizeFitter>();
+        csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
     }
 
     private void BuildScrollView()
@@ -129,7 +183,7 @@ public class LobbyPlayerListUI : MonoBehaviour
         ScrollRect scrollRect = scrollViewGO.GetComponent<ScrollRect>();
         scrollRect.horizontal = false;
         scrollRect.vertical = true;
-        scrollRect.movementType = ScrollRect.MovementType.Clamped;
+        scrollRect.movementType = ScrollRect.MovementType.Elastic;
         scrollRect.scrollSensitivity = 30f;
 
         // === Viewport ===
