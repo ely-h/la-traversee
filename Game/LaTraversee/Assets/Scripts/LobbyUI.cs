@@ -34,18 +34,15 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private AudioClip lobbyMusic;
 
     private bool listenersRegistered;
+    private bool canShowLobby = false; // Prevents auto-show until Title Screen is dismissed
+    private LobbyStateData lastLobbyState; // Caches state
 
     private void Start()
     {
+        Debug.Log("LobbyUI: Initializing...");
         if (startButton != null)
         {
             startButton.onClick.AddListener(LaunchParty);
-        }
-
-        if (audioSource != null && lobbyMusic != null) {
-            audioSource.clip = lobbyMusic;
-            audioSource.loop = true;
-            audioSource.Play();
         }
 
         StartCoroutine(InitializeSocketBindings());
@@ -64,17 +61,14 @@ public class LobbyUI : MonoBehaviour
             yield return null;
         }
 
-        if (listenersRegistered)
-        {
-            yield break;
-        }
-
+        if (listenersRegistered) yield break;
         listenersRegistered = true;
 
         networkManager.socket.On("lobby_state", (response) => {
             try
             {
                 LobbyStateData data = response.GetValue<LobbyStateData>();
+                lastLobbyState = data;
                 networkManager.EnqueueLobbyAction(() => ApplyLobbyState(data));
             }
             catch (Exception ex)
@@ -89,129 +83,113 @@ public class LobbyUI : MonoBehaviour
                 LobbyStateData data = response.GetValue<LobbyStateData>();
                 networkManager.EnqueueLobbyAction(() => ApplyLobbyState(data));
             }
-            catch
-            {
-                // The host already receives the canonical lobby_state event.
-            }
+            catch {}
         });
 
         networkManager.socket.On("game_started", (response) => {
             networkManager.EnqueueLobbyAction(HandleGameStarted);
         });
 
-        // Play Again: server confirmed restart, re-show lobby
         networkManager.socket.On("game_restarted", (response) => {
             networkManager.EnqueueLobbyAction(HandleGameRestarted);
         });
 
-        if (statusText != null)
-        {
-            statusText.text = "En attente de joueurs...";
-        }
+        if (statusText != null) statusText.text = "En attente de joueurs...";
+        Debug.Log("LobbyUI: Socket bindings initialized.");
     }
 
     private void ApplyLobbyState(LobbyStateData data)
     {
-        if (data == null)
-        {
-            return;
-        }
+        if (data == null) return;
 
+        bool isLobbyState = (data.state == "lobby");
+        
         if (lobbyPanel != null)
         {
-            lobbyPanel.SetActive(data.state == "lobby");
+            // Only show if Title Screen is dismissed AND server is in lobby mode
+            bool shouldBeActive = canShowLobby && isLobbyState;
+            lobbyPanel.SetActive(shouldBeActive);
+            Debug.Log($"LobbyUI: ApplyLobbyState - PanelActive={shouldBeActive} (canShow={canShowLobby}, state={data.state})");
         }
 
+        // ... Existing UI Refresh ...
         if (statusText != null)
         {
             int count = data.players != null ? data.players.Count : 0;
-            statusText.text = data.state == "lobby"
-                ? $"Lobby: {count} joueur(s) connecte(s)"
-                : "Chargement de l'arene...";
+            statusText.text = isLobbyState ? $"Lobby: {count} joueur(s) connecte(s)" : "Chargement...";
         }
 
-        if (lobbyPlayerListUI != null)
+        if (lobbyPlayerListUI != null && data.players != null)
         {
             List<string> names = new List<string>();
-            if (data.players != null)
-            {
-                foreach (LobbyPlayerData player in data.players)
-                {
-                    names.Add(player.pseudo);
-                }
-            }
+            foreach (var p in data.players) names.Add(p.pseudo);
             lobbyPlayerListUI.RefreshPlayerList(names);
         }
 
         if (qrCodeDisplay != null)
         {
             string url = qrCodeDisplay.RefreshQrCode(data.port);
-            if (joinUrlText != null)
-            {
-                joinUrlText.text = url;
-            }
+            if (joinUrlText != null) joinUrlText.text = url;
         }
     }
 
     public void LaunchParty()
     {
-        if (networkManager == null || networkManager.socket == null)
-        {
-            return;
-        }
-
+        if (networkManager?.socket == null) return;
         networkManager.socket.Emit("start_game");
-        if (statusText != null)
-        {
-            statusText.text = "Lancement de la partie...";
-        }
-        Debug.Log("LobbyUI: start_game envoye.");
+        if (statusText != null) statusText.text = "Lancement...";
     }
 
     private void HandleGameStarted()
     {
-        if (lobbyPanel != null)
-        {
-            lobbyPanel.SetActive(false);
-        }
-
-        // Arrêt de la musique d'accueil
+        Debug.Log("LobbyUI: Game Started received.");
+        if (lobbyPanel != null) lobbyPanel.SetActive(false);
         if (audioSource != null) audioSource.Stop();
-        
-        if (networkManager != null)
-        {
-            networkManager.StartArenaPhase();
-        }
+        networkManager?.StartArenaPhase();
     }
 
     private void HandleGameRestarted()
     {
-        // Re-show the lobby panel
+        Debug.Log("LobbyUI: Game Restarted received.");
+        if (lobbyPanel != null) lobbyPanel.SetActive(true);
+        if (audioSource != null && lobbyMusic != null)
+        {
+            audioSource.clip = lobbyMusic;
+            audioSource.Play();
+        }
+    }
+
+    /// <summary>
+    /// Triggered by TitleScreenManager when 'PLAY' is clicked.
+    /// </summary>
+    public void SetLobbyReady()
+    {
+        Debug.Log("LobbyUI: SetLobbyReady() triggered from Title Screen.");
+        canShowLobby = true;
+        
+        // Immediate show if we have a panel
         if (lobbyPanel != null)
         {
             lobbyPanel.SetActive(true);
+            Debug.Log("LobbyUI: SetLobbyReady - Force-activating lobbyPanel.");
         }
-
-        if (statusText != null)
+        else
         {
-            statusText.text = "En attente de joueurs...";
+            Debug.LogError("LobbyUI: SetLobbyReady - lobbyPanel reference is MISSING!");
         }
 
-        // Restart lobby music
-        if (audioSource != null && lobbyMusic != null)
+        // Music fallback
+        if (audioSource != null && lobbyMusic != null && !audioSource.isPlaying)
         {
             audioSource.clip = lobbyMusic;
             audioSource.loop = true;
             audioSource.Play();
         }
 
-        // Ask the server to re-emit playerJoin for every connected player.
-        // This re-populates NetworkManager.players dict which was cleared during PlayAgain().
-        if (networkManager != null && networkManager.socket != null)
+        // Apply state if it arrived early
+        if (lastLobbyState != null)
         {
-            networkManager.socket.Emit("request_rejoin_all");
+            ApplyLobbyState(lastLobbyState);
         }
-
-        Debug.Log("LobbyUI: Game restarted. Lobby is open again.");
     }
 }
