@@ -262,47 +262,44 @@ public class NetworkManager : MonoBehaviour
 
     private string ResolveServerDirectory()
     {
-        string[] candidates = new string[]
+        // Standard Unity path for both Editor and Standalone builds
+        string path = Path.Combine(Application.streamingAssetsPath, "Server");
+        if (Directory.Exists(path))
         {
-            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "..", "Server")),
-            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "Server")),
-            Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Server"))
-        };
-
-        foreach (string candidate in candidates)
-        {
-            if (Directory.Exists(candidate))
-            {
-                return candidate;
-            }
+            return path;
         }
 
+        Debug.LogError("AutoServerStart: Directory not found at: " + path);
         return null;
     }
 
     private void ShutdownLocalServer()
     {
-        if (localServerProcess == null || localServerProcess.HasExited)
-        {
-            return;
-        }
+        if (localServerProcess == null) return;
 
-        Debug.Log("AutoServerStart: arret propre du serveur local.");
+        Debug.Log("AutoServerStart: Stopping local server.");
 
         try
         {
-            localServerProcess.StandardInput.WriteLine("shutdown");
-            localServerProcess.StandardInput.Flush();
-
-            if (!localServerProcess.WaitForExit(3000))
+            if (!localServerProcess.HasExited)
             {
-                localServerProcess.Kill();
-                localServerProcess.WaitForExit(1000);
+                // 1. Try clean shutdown via stdin
+                localServerProcess.StandardInput.WriteLine("shutdown");
+                localServerProcess.StandardInput.Flush();
+
+                // 2. Wait for exit, then kill if stubborn
+                if (!localServerProcess.WaitForExit(2000))
+                {
+                    Debug.LogWarning("AutoServerStart: Server did not stop cleanly, killing process.");
+                    localServerProcess.Kill();
+                }
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError("AutoServerStart: echec de l'arret du serveur local: " + ex.Message);
+            Debug.LogError("AutoServerStart: Shutdown error: " + ex.Message);
+            // Forced kill if everything else fails
+            try { localServerProcess?.Kill(); } catch { }
         }
         finally
         {
