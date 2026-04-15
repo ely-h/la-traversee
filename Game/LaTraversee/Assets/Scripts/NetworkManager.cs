@@ -806,6 +806,7 @@ public class NetworkManager : MonoBehaviour
         if (socket != null)
         {
             socket.Emit("restart_game");
+            socket.Emit("request_rejoin_all");
         }
 
         Debug.Log("PlayAgain: Reset complete. Waiting for players in lobby.");
