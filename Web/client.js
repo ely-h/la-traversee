@@ -137,7 +137,7 @@ joinButton.addEventListener('pointerdown', () => {
 });
 
 socket.on('connect', () => {
-    console.log('Connecte au serveur');
+    console.log('Connecté au serveur');
     if (reconnectOverlay) {
         reconnectOverlay.style.display = 'none';
 

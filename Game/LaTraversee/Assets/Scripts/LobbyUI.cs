@@ -26,7 +26,7 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private GameObject lobbyPanel;
     [SerializeField] private TMP_Text statusText;
-    [SerializeField] private TMP_Text playersListText;
+    [SerializeField] private LobbyPlayerListUI lobbyPlayerListUI;
     [SerializeField] private TMP_Text joinUrlText;
     [SerializeField] private Button startButton;
     [SerializeField] private LobbyQrCodeDisplay qrCodeDisplay;
@@ -130,22 +130,17 @@ public class LobbyUI : MonoBehaviour
                 : "Chargement de l'arene...";
         }
 
-        if (playersListText != null)
+        if (lobbyPlayerListUI != null)
         {
-            if (data.players == null || data.players.Count == 0)
+            List<string> names = new List<string>();
+            if (data.players != null)
             {
-                playersListText.text = "Aucun joueur connecte";
-            }
-            else
-            {
-                List<string> lines = new List<string>();
                 foreach (LobbyPlayerData player in data.players)
                 {
-                    lines.Add($"- {player.pseudo}");
+                    names.Add(player.pseudo);
                 }
-
-                playersListText.text = string.Join("\n", lines);
             }
+            lobbyPlayerListUI.RefreshPlayerList(names);
         }
 
         if (qrCodeDisplay != null)
